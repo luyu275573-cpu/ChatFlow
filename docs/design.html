@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>② ChatFlow 跨端 AI 助手 · UI 设计图</title>
+<style>
+  :root{
+    --indigo:#6366F1; --green:#22C55E; --light:#F8FAFC; --dark:#0F172A;
+    --ink:#0F172A; --sub:#64748B; --line:#E2E8F0; --user:#6366F1; --ai:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#0B1220;color:#e5e7eb;padding:32px 20px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:26px;color:#fff;margin-bottom:6px}
+  h1 small{font-size:14px;color:#94a3b8;font-weight:400;margin-left:10px}
+  .sub{color:#94a3b8;font-size:13px;margin-bottom:24px}
+  h2{font-size:16px;color:#fff;margin:30px 0 14px;padding-left:10px;border-left:3px solid var(--indigo)}
+  .swatches{display:flex;gap:10px;flex-wrap:wrap}
+  .sw{width:120px;height:64px;border-radius:10px;display:flex;align-items:flex-end;padding:8px;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .sw span{background:rgba(0,0,0,.25);padding:1px 6px;border-radius:4px}
+  table{width:100%;border-collapse:collapse;background:#111827;border-radius:10px;overflow:hidden;font-size:13px}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #1f2937}
+  th{background:#1f2937;color:#fff;font-weight:600}
+  td{color:#cbd5e1}
+  .pages{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .mockup{width:300px;background:#fff;border-radius:24px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  .label{color:#94a3b8;font-size:12px;text-align:center;margin-top:10px}
+  .screen{background:var(--light);border-radius:16px;overflow:hidden;height:520px;display:flex;flex-direction:column}
+  .statusbar{height:26px;background:var(--light);display:flex;justify-content:space-between;align-items:center;padding:0 12px;color:var(--ink);font-size:10px}
+  .navbar{background:#fff;border-bottom:1px solid var(--line);padding:12px 14px;font-size:14px;font-weight:600;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+  .chat{flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px}
+  .bubble{max-width:82%;padding:9px 12px;font-size:12px;line-height:1.5;border-radius:14px}
+  .bubble.user{align-self:flex-end;background:var(--user);color:#fff;border-bottom-right-radius:4px}
+  .bubble.ai{align-self:flex-start;background:#fff;color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .bubble .who{font-size:10px;color:#8b5cf6;font-weight:700;margin-bottom:3px}
+  .typing{align-self:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:9px 12px;display:flex;gap:4px}
+  .typing span{width:5px;height:5px;border-radius:50%;background:#cbd5e1;animation:blink 1s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+  .inputbar{background:#fff;border-top:1px solid var(--line);padding:10px;display:flex;gap:8px;align-items:center}
+  .input{flex:1;background:var(--light);border:1px solid var(--line);border-radius:18px;padding:8px 12px;font-size:12px;color:#94a3b8}
+  .send{width:32px;height:32px;border-radius:50%;background:var(--indigo);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .modelchip{background:#EEF2FF;color:#4F46E5;border-radius:12px;padding:3px 8px;font-size:10px;font-weight:600}
+  .md{font-size:11px;color:#334155;line-height:1.7}
+  .md code{background:#EEF2FF;color:#4F46E5;padding:1px 5px;border-radius:4px;font-family:monospace}
+  .sidebar{background:#fff;border-right:1px solid var(--line)}
+  .sess{display:flex;gap:8px;align-items:center;padding:10px 14px;font-size:12px;color:var(--ink);border-bottom:1px solid var(--line)}
+  .sess.on{background:#EEF2FF;color:#4F46E5;font-weight:600}
+  .genimg{background:linear-gradient(135deg,#6366F1,#8B5CF6);border-radius:12px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>② ChatFlow 跨端 AI 助手 <small>Flutter · 阶段② AI 渐入</small></h1>
+  <div class="sub">定位：一份代码跑 iOS/Android/Web/桌面的 AI 助手 · 时间 2025.02–2025.09</div>
+
+  <h2>视觉风格</h2>
+  <div class="swatches">
+    <div class="sw" style="background:#6366F1">主色靛蓝<span>#6366F1</span></div>
+    <div class="sw" style="background:#22C55E">流式绿<span>#22C55E</span></div>
+    <div class="sw" style="background:#8B5CF6">渐变紫<span>#8B5CF6</span></div>
+    <div class="sw" style="background:#F8FAFC;color:#0F172A;text-shadow:none">浅背景<span>#F8FAFC</span></div>
+    <div class="sw" style="background:#0F172A">深背景<span>#0F172A</span></div>
+    <div class="sw" style="background:#0F172A">主文字<span>#0F172A</span></div>
+  </div>
+  <p style="color:#94a3b8;font-size:13px;margin-top:10px">风格：现代极简 · 对话气泡 + 模型切换芯片 · 圆角 14px · 支持浅色/深色双主题 · 流式输出打字机光标</p>
+
+  <h2>功能清单</h2>
+  <table>
+    <tr><th>页面</th><th>核心功能</th><th>AI 能力</th></tr>
+    <tr><td>对话主页</td><td>流式对话、Markdown 渲染、代码高亮、多会话</td><td>SSE 流式、多模型路由</td></tr>
+    <tr><td>侧边栏（会话列表）</td><td>新建会话、历史会话、重命名、删除</td><td>会话上下文管理</td></tr>
+    <tr><td>设置（模型配置）</td><td>模型切换、API Key、温度、System Prompt</td><td>DeepSeek-R1/Qwen2.5/Gemini</td></tr>
+    <tr><td>文生图</td><td>文字描述生成图片、下载分享</td><td>图像生成模型</td></tr>
+    <tr><td>语音交互</td><td>语音输入、TTS 播报</td><td>ASR / TTS</td></tr>
+  </table>
+
+  <h2>页面设计图（5 屏）</h2>
+  <div class="pages">
+    <!-- 对话主界面 -->
+    <div>
+      <div class="mockup"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮ 🔋</span></div>
+        <div class="navbar"><span>☰ ChatFlow</span><span class="modelchip">DeepSeek-R1</span></div>
+        <div class="chat">
+          <div class="bubble user">帮我写一段 Flutter 流式对话的要点</div>
+          <div class="bubble ai"><div class="who">AI</div><div class="md">好的，关键点：<br>1. 用 <code>dio</code> 发 SSE 请求<br>2. 逐 <code>delta</code> 更新 UI<br>3. 处理跨 chunk 半行</div></div>
+          <div class="typing"><span></span><span></span><span></span></div>
+        </div>
+        <div class="inputbar"><span style="font-size:14px">🎤</span><div class="input">输入消息…</div><div class="send">➤</div></div>
+      </div></div>
+      <p class="label">对话主页 · 流式气泡</p>
+    </div>
+    <!-- 侧边栏 -->
+    <div>
+      <div class="mockup"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮ 🔋</span></div>
+        <div class="navbar" style="justify-content:flex-start;gap:8px"><span style="color:#94a3b8">✕</span> 会话</div>
+        <div class="sidebar" style="flex:1;overflow:hidden">
+          <div style="padding:10px 14px;font-size:11px;color:#94a3b8">最近会话</div>
+          <div class="sess on">💬 Flutter 流式对话要点</div>
+          <div class="sess">💬 翻译：产品说明</div>
+          <div class="sess">💬 代码审查：riverpod</div>
+          <div class="sess">💬 周报总结</div>
+          <div class="sess">💬 文生图提示词</div>
+        </div>
+        <div class="navbar" style="justify-content:center;color:#6366F1;font-size:13px">＋ 新建会话</div>
+      </div></div>
+      <p class="label">侧边栏 · 会话列表</p>
+    </div>
+    <!-- 设置 -->
+    <div>
+      <div class="mockup"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮ 🔋</span></div>
+        <div class="navbar" style="background:#fff;color:#0F172A;border-bottom:1px solid #E2E8F0">模型设置</div>
+        <div class="chat" style="gap:8px">
+          <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;font-size:12px;color:#0F172A">模型 <span style="float:right;color:#6366F1">DeepSeek-R1 ▼</span></div>
+          <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;font-size:12px;color:#0F172A">温度 <span style="float:right;color:#6366F1">0.7</span></div>
+          <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;font-size:12px;color:#0F172A">API Key <span style="float:right;color:#94a3b8">••••••••</span></div>
+          <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;font-size:12px;color:#0F172A">System Prompt <span style="float:right;color:#94a3b8">默认</span></div>
+          <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;font-size:12px;color:#0F172A">深色模式 <span style="float:right;color:#6366F1">跟随系统</span></div>
+        </div>
+      </div></div>
+      <p class="label">设置 · 模型配置</p>
+    </div>
+    <!-- 文生图 -->
+    <div>
+      <div class="mockup"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮ 🔋</span></div>
+        <div class="navbar"><span>‹ 返回</span><span>文生图</span><span style="color:#6366F1">下载</span></div>
+        <div class="chat">
+          <div class="genimg"><span style="font-size:30px">🖼️</span><span style="font-size:12px;margin-top:6px">赛博朋克风格的未来都市</span></div>
+          <div class="bubble user">赛博朋克风格的未来都市，霓虹灯光，雨夜</div>
+        </div>
+        <div class="inputbar"><div class="input">描述你想要的图片…</div><div class="send">✦</div></div>
+      </div></div>
+      <p class="label">文生图 · 生成 + 下载</p>
+    </div>
+    <!-- 语音 -->
+    <div>
+      <div class="mockup"><div class="screen">
+        <div class="statusbar"><span>9:41</span><span>5G ▮▮▮ 🔋</span></div>
+        <div class="navbar"><span>☰ ChatFlow</span><span class="modelchip">Gemini 2.0</span></div>
+        <div class="chat">
+          <div class="bubble user">（语音输入）帮我总结今天天气</div>
+          <div class="bubble ai"><div class="who">AI · 播报中 🔊</div><div class="md">今天成都多云，气温 22–28℃，适合出行。</div></div>
+        </div>
+        <div class="inputbar" style="justify-content:center"><span style="font-size:26px;color:#6366F1">🎙️</span></div>
+      </div></div>
+      <p class="label">语音 · ASR + TTS</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
