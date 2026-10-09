@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/memory/conversation_memory.dart';
+import '../../core/memory/conversation_session.dart';
+import '../../core/models/message.dart';
 
 /// Persists the active conversation without coupling the core memory to a
 /// platform storage plugin.
@@ -11,6 +13,8 @@ class ConversationStorage {
     this._preferences, {
     this.key = 'chatflow.conversation.v1',
   });
+
+  static const String sessionsKey = 'chatflow.conversations.v1';
 
   final SharedPreferences _preferences;
   final String key;
@@ -46,7 +50,66 @@ class ConversationStorage {
     await _preferences.setString(key, jsonEncode(memory.toJson()));
   }
 
+  Future<List<ConversationSession>> loadSessions() async {
+    final String? encoded = _preferences.getString(sessionsKey);
+    if (encoded == null || encoded.isEmpty) {
+      final ConversationMemory legacy = await load();
+      if (legacy.messages.isEmpty) {
+        return <ConversationSession>[];
+      }
+      return <ConversationSession>[
+        ConversationSession(
+          id: 'default',
+          title: _titleFor(legacy.messages),
+          messages: legacy.messages,
+        ),
+      ];
+    }
+
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(encoded);
+    } on FormatException catch (error) {
+      throw FormatException('会话列表不是有效 JSON：${error.message}');
+    }
+    if (decoded is! List) {
+      throw const FormatException('会话列表存储数据必须是数组');
+    }
+    return decoded.map((Object? rawSession) {
+      if (rawSession is! Map) {
+        throw const FormatException('会话条目必须是对象');
+      }
+      return ConversationSession.fromJson(
+        Map<String, dynamic>.from(rawSession),
+      );
+    }).toList();
+  }
+
+  Future<void> saveSessions(Iterable<ConversationSession> sessions) async {
+    await _preferences.setString(
+      sessionsKey,
+      jsonEncode(
+        sessions
+            .map((ConversationSession session) => session.toJson())
+            .toList(),
+      ),
+    );
+  }
+
   Future<void> clear() async {
     await _preferences.remove(key);
+    await _preferences.remove(sessionsKey);
+  }
+
+  String _titleFor(List<Message> messages) {
+    final Message? firstUser = messages.cast<Message?>().firstWhere(
+          (Message? message) => message?.role == MessageRole.user,
+          orElse: () => null,
+        );
+    final String title = firstUser?.content.trim() ?? '';
+    if (title.isEmpty) {
+      return '新会话';
+    }
+    return title.length > 24 ? '${title.substring(0, 24)}…' : title;
   }
 }

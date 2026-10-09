@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/memory/conversation_session.dart';
 import 'core/models/message.dart';
 import 'features/chat/application/chat_controller.dart';
 import 'theme/design_tokens.dart';
@@ -90,6 +91,145 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
     );
   }
 
+  Future<void> _showSessions() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.72,
+          child: Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              final ChatState chatState = ref.watch(chatControllerProvider);
+              final ChatController chatController =
+                  ref.read(chatControllerProvider.notifier);
+              return SafeArea(
+                child: Column(
+                  children: <Widget>[
+                    ListTile(
+                      leading: const Icon(Icons.close),
+                      title: const Text('会话'),
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: DesignTokens.space3,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '最近会话',
+                          style: TextStyle(color: DesignTokens.subText),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: chatState.sessions.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final ConversationSession session =
+                              chatState.sessions[index];
+                          return ListTile(
+                            selected: session.id == chatState.activeSessionId,
+                            leading: const Icon(Icons.chat_bubble_outline),
+                            title: Text(
+                              session.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            onTap: () async {
+                              await chatController.selectSession(session.id);
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            trailing: PopupMenuButton<String>(
+                              onSelected: (String action) async {
+                                if (action == 'rename') {
+                                  await _renameSession(session);
+                                } else if (action == 'delete') {
+                                  await chatController
+                                      .deleteSession(session.id);
+                                }
+                              },
+                              itemBuilder: (BuildContext context) {
+                                return const <PopupMenuEntry<String>>[
+                                  PopupMenuItem<String>(
+                                    value: 'rename',
+                                    child: Text('重命名'),
+                                  ),
+                                  PopupMenuItem<String>(
+                                    value: 'delete',
+                                    child: Text('删除'),
+                                  ),
+                                ];
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.add,
+                        color: DesignTokens.primary,
+                      ),
+                      title: const Text(
+                        '新建会话',
+                        style: TextStyle(color: DesignTokens.primary),
+                      ),
+                      onTap: () async {
+                        await chatController.createSession();
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _renameSession(ConversationSession session) async {
+    final TextEditingController controller =
+        TextEditingController(text: session.title);
+    final String? title = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('重命名会话'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('保存'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (title != null) {
+      await ref.read(chatControllerProvider.notifier).renameSession(
+            session.id,
+            title,
+          );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ChatState chatState = ref.watch(chatControllerProvider);
@@ -107,7 +247,7 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
         leading: IconButton(
           icon: const Icon(Icons.menu),
           tooltip: '会话列表',
-          onPressed: () => _showComingSoon('会话列表'),
+          onPressed: _showSessions,
         ),
         title: const Text(
           'ChatFlow',

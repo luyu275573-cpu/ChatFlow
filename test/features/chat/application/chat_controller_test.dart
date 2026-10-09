@@ -34,11 +34,8 @@ void main() {
     expect(controller.state.messages.last.content, contains('Qwen2.5'));
     expect(controller.state.messages.last.role.name, 'assistant');
 
-    final restored = await ConversationStorage(preferences).load();
-    expect(restored.toJson(), <String, dynamic>{
-      'messages':
-          controller.state.messages.map((message) => message.toJson()).toList(),
-    });
+    final restored = await ConversationStorage(preferences).loadSessions();
+    expect(restored.single.toJson(), controller.state.sessions.single.toJson());
   });
 
   test('ignores blank messages and exposes read-only state', () async {
@@ -57,5 +54,27 @@ void main() {
       () => controller.state.messages.clear(),
       throwsUnsupportedError,
     );
+  });
+
+  test('creates, renames, selects, and deletes sessions', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final controller =
+        ChatController(storage: ConversationStorage(preferences));
+    addTearDown(controller.dispose);
+
+    await controller.ready;
+    await controller.createSession();
+    final String newSessionId = controller.state.activeSessionId;
+    expect(controller.state.sessions, hasLength(2));
+    expect(controller.state.sessions.first.title, '新会话');
+
+    await controller.renameSession(newSessionId, '重命名会话');
+    expect(controller.state.sessions.first.title, '重命名会话');
+
+    await controller.selectSession('default');
+    expect(controller.state.activeSessionId, 'default');
+    await controller.deleteSession(newSessionId);
+    expect(controller.state.sessions, hasLength(1));
   });
 }

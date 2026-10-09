@@ -79,4 +79,21 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('opens the session drawer and creates a new session',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    expect(find.text('最近会话'), findsOneWidget);
+
+    await tester.tap(find.text('新建会话'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+
+    expect(find.text('新会话'), findsOneWidget);
+  });
 }

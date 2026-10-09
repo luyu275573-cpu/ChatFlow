@@ -1,20 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/llm/llm_client.dart';
-import '../../../core/memory/conversation_memory.dart';
+import '../../../core/memory/conversation_session.dart';
 import '../../../core/models/llm_config.dart';
 import '../../../core/models/message.dart';
 import '../../../shared/services/conversation_storage.dart';
 
 class ChatState {
   ChatState({
-    required Iterable<Message> messages,
+    required Iterable<ConversationSession> sessions,
+    required this.activeSessionId,
     required this.selectedModel,
     this.isSending = false,
-  }) : messages = List<Message>.unmodifiable(messages);
+  }) : sessions = List<ConversationSession>.unmodifiable(sessions);
 
   factory ChatState.initial() {
-    return ChatState(
+    final ConversationSession session = ConversationSession(
+      id: 'default',
+      title: 'Flutter 流式对话要点',
       messages: <Message>[
         const Message(
           role: MessageRole.user,
@@ -26,21 +29,37 @@ class ChatState {
               '好的，关键点：\n1. 用 dio 发 SSE 请求\n2. 逐 delta 更新 UI\n3. 处理跨 chunk 半行',
         ),
       ],
+    );
+    return ChatState(
+      sessions: <ConversationSession>[session],
+      activeSessionId: session.id,
       selectedModel: ChatController.models.first,
     );
   }
 
-  final List<Message> messages;
+  final List<ConversationSession> sessions;
+  final String activeSessionId;
   final String selectedModel;
   final bool isSending;
 
+  List<Message> get messages {
+    for (final ConversationSession session in sessions) {
+      if (session.id == activeSessionId) {
+        return session.messages;
+      }
+    }
+    return const <Message>[];
+  }
+
   ChatState copyWith({
-    Iterable<Message>? messages,
+    Iterable<ConversationSession>? sessions,
+    String? activeSessionId,
     String? selectedModel,
     bool? isSending,
   }) {
     return ChatState(
-      messages: messages ?? this.messages,
+      sessions: sessions ?? this.sessions,
+      activeSessionId: activeSessionId ?? this.activeSessionId,
       selectedModel: selectedModel ?? this.selectedModel,
       isSending: isSending ?? this.isSending,
     );
@@ -75,15 +94,18 @@ class ChatController extends StateNotifier<ChatState> {
     try {
       final ConversationStorage storage =
           _storage ?? await ConversationStorage.create();
-      final ConversationMemory memory = await storage.load();
+      final List<ConversationSession> sessions = await storage.loadSessions();
       if (!mounted) {
         return;
       }
       _storage = storage;
-      if (memory.messages.isNotEmpty) {
-        state = state.copyWith(messages: memory.messages);
+      if (sessions.isNotEmpty) {
+        state = state.copyWith(
+          sessions: sessions,
+          activeSessionId: sessions.first.id,
+        );
       } else {
-        await storage.save(ConversationMemory(state.messages));
+        await storage.saveSessions(state.sessions);
       }
     } catch (_) {
       // Keep the local demo usable when a platform has no storage plugin.
@@ -96,6 +118,73 @@ class ChatController extends StateNotifier<ChatState> {
     }
   }
 
+  Future<void> createSession() async {
+    await _ready;
+    if (!mounted || state.isSending) {
+      return;
+    }
+    final ConversationSession session = ConversationSession(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      title: '新会话',
+      messages: const <Message>[],
+    );
+    state = state.copyWith(
+      sessions: <ConversationSession>[session, ...state.sessions],
+      activeSessionId: session.id,
+    );
+    await _persist();
+  }
+
+  Future<void> selectSession(String sessionId) async {
+    await _ready;
+    if (!mounted ||
+        state.isSending ||
+        !state.sessions
+            .any((ConversationSession session) => session.id == sessionId)) {
+      return;
+    }
+    state = state.copyWith(activeSessionId: sessionId);
+  }
+
+  Future<void> renameSession(String sessionId, String title) async {
+    await _ready;
+    if (!mounted || state.isSending) {
+      return;
+    }
+    final String trimmed = title.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+    _updateSession(
+      sessionId,
+      (ConversationSession session) => session.copyWith(
+        title: _limitTitle(trimmed),
+      ),
+    );
+    await _persist();
+  }
+
+  Future<void> deleteSession(String sessionId) async {
+    await _ready;
+    if (!mounted || state.isSending || state.sessions.length == 1) {
+      return;
+    }
+    final List<ConversationSession> sessions = state.sessions
+        .where((ConversationSession session) => session.id != sessionId)
+        .toList();
+    if (sessions.length == state.sessions.length) {
+      return;
+    }
+    final String activeSessionId = state.activeSessionId == sessionId
+        ? sessions.first.id
+        : state.activeSessionId;
+    state = state.copyWith(
+      sessions: sessions,
+      activeSessionId: activeSessionId,
+    );
+    await _persist();
+  }
+
   Future<void> send(String text) async {
     await _ready;
     if (!mounted || state.isSending) {
@@ -106,12 +195,23 @@ class ChatController extends StateNotifier<ChatState> {
       return;
     }
 
+    final ConversationSession? session = _activeSession;
+    if (session == null) {
+      return;
+    }
     final LlmConfig config = modelConfigs[state.selectedModel]!;
-    final List<Message> messages = List<Message>.from(state.messages)
+    final List<Message> messages = List<Message>.from(session.messages)
       ..add(Message(role: MessageRole.user, content: trimmed))
       ..add(const Message(role: MessageRole.assistant, content: ''));
     final int assistantIndex = messages.length - 1;
-    state = state.copyWith(messages: messages, isSending: true);
+    _updateSession(
+      session.id,
+      (ConversationSession current) => current.copyWith(
+        title: current.title == '新会话' ? _limitTitle(trimmed) : current.title,
+        messages: messages,
+      ),
+    );
+    state = state.copyWith(isSending: true);
     await _persist();
     if (!mounted) {
       return;
@@ -179,9 +279,16 @@ class ChatController extends StateNotifier<ChatState> {
     if (!mounted) {
       return;
     }
-    final List<Message> messages = List<Message>.from(state.messages);
+    final ConversationSession? session = _activeSession;
+    if (session == null || index >= session.messages.length) {
+      return;
+    }
+    final List<Message> messages = List<Message>.from(session.messages);
     messages[index] = message;
-    state = state.copyWith(messages: messages);
+    _updateSession(
+      session.id,
+      (ConversationSession current) => current.copyWith(messages: messages),
+    );
   }
 
   Future<void> _persist() async {
@@ -190,10 +297,39 @@ class ChatController extends StateNotifier<ChatState> {
       return;
     }
     try {
-      await storage.save(ConversationMemory(state.messages));
+      await storage.saveSessions(state.sessions);
     } catch (_) {
       // Storage failures must not turn a successful chat request into an error.
     }
+  }
+
+  ConversationSession? get _activeSession {
+    for (final ConversationSession session in state.sessions) {
+      if (session.id == state.activeSessionId) {
+        return session;
+      }
+    }
+    return null;
+  }
+
+  void _updateSession(
+    String sessionId,
+    ConversationSession Function(ConversationSession session) update,
+  ) {
+    if (!mounted) {
+      return;
+    }
+    final List<ConversationSession> sessions = state.sessions
+        .map(
+          (ConversationSession session) =>
+              session.id == sessionId ? update(session) : session,
+        )
+        .toList();
+    state = state.copyWith(sessions: sessions);
+  }
+
+  String _limitTitle(String title) {
+    return title.length > 24 ? '${title.substring(0, 24)}…' : title;
   }
 }
 

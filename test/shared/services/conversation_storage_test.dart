@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:chatflow/core/memory/conversation_memory.dart';
+import 'package:chatflow/core/memory/conversation_session.dart';
 import 'package:chatflow/core/models/message.dart';
 import 'package:chatflow/shared/services/conversation_storage.dart';
 
@@ -47,5 +48,24 @@ void main() {
     final storage = ConversationStorage(preferences);
 
     expect(() => storage.load(), throwsFormatException);
+  });
+
+  test('loads and saves multiple sessions', () async {
+    final preferences = await SharedPreferences.getInstance();
+    final storage = ConversationStorage(preferences);
+    final sessions = <ConversationSession>[
+      ConversationSession(
+        id: 'one',
+        title: '第一个会话',
+        messages: <Message>[
+          const Message(role: MessageRole.user, content: '内容'),
+        ],
+      ),
+    ];
+
+    await storage.saveSessions(sessions);
+
+    final restored = await storage.loadSessions();
+    expect(restored.single.toJson(), sessions.single.toJson());
   });
 }
