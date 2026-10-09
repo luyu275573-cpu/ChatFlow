@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/llm/llm_client.dart';
-import 'core/memory/conversation_memory.dart';
-import 'core/models/llm_config.dart';
 import 'core/models/message.dart';
-import 'shared/services/conversation_storage.dart';
+import 'features/chat/application/chat_controller.dart';
 import 'theme/design_tokens.dart';
 
 void main() {
@@ -13,6 +11,17 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ProviderScope(
+      child: _ChatFlowApp(),
+    );
+  }
+}
+
+class _ChatFlowApp extends StatelessWidget {
+  const _ChatFlowApp();
 
   @override
   Widget build(BuildContext context) {
@@ -35,47 +44,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ChatHomePage extends StatefulWidget {
+class ChatHomePage extends ConsumerStatefulWidget {
   const ChatHomePage({super.key});
 
   @override
-  State<ChatHomePage> createState() => _ChatHomePageState();
+  ConsumerState<ChatHomePage> createState() => _ChatHomePageState();
 }
 
-class _ChatHomePageState extends State<ChatHomePage> {
-  static const List<String> _models = <String>[
-    'DeepSeek-R1',
-    'Qwen2.5',
-    'Gemini 2.0 Flash',
-  ];
-  static const Map<String, LlmConfig> _modelConfigs = <String, LlmConfig>{
-    'DeepSeek-R1': LlmConfig.deepSeek,
-    'Qwen2.5': LlmConfig.qwen,
-    'Gemini 2.0 Flash': LlmConfig.gemini,
-  };
-
+class _ChatHomePageState extends ConsumerState<ChatHomePage> {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Message> _messages = <Message>[
-    const Message(
-      role: MessageRole.user,
-      content: '帮我写一段 Flutter 流式对话的要点',
-    ),
-    const Message(
-      role: MessageRole.assistant,
-      content: '好的，关键点：\n1. 用 dio 发 SSE 请求\n2. 逐 delta 更新 UI\n3. 处理跨 chunk 半行',
-    ),
-  ];
-
-  ConversationStorage? _conversationStorage;
-  String _selectedModel = _models.first;
-  bool _isSending = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _restoreConversation();
-  }
 
   @override
   void dispose() {
@@ -84,118 +62,13 @@ class _ChatHomePageState extends State<ChatHomePage> {
     super.dispose();
   }
 
-  Future<void> _restoreConversation() async {
-    try {
-      final ConversationStorage storage = await ConversationStorage.create();
-      final ConversationMemory memory = await storage.load();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _conversationStorage = storage;
-        if (memory.messages.isNotEmpty) {
-          _messages
-            ..clear()
-            ..addAll(memory.messages);
-        }
-      });
-      if (memory.messages.isEmpty) {
-        await storage.save(ConversationMemory(_messages));
-      }
-    } catch (_) {
-      // Keep the local demo usable when a platform has no storage plugin.
-    }
-  }
-
-  Future<void> _persistConversation() async {
-    final ConversationStorage? storage = _conversationStorage;
-    if (storage == null) {
-      return;
-    }
-    try {
-      await storage.save(ConversationMemory(_messages));
-    } catch (_) {
-      // A storage failure must not turn a successful chat request into an error.
-    }
-  }
-
   Future<void> _sendMessage() async {
-    if (_isSending) {
-      return;
-    }
-    final String text = _inputController.text.trim();
+    final String text = _inputController.text;
     if (text.isEmpty) {
       return;
     }
-
-    final LlmConfig config = _modelConfigs[_selectedModel]!;
-    late final int assistantIndex;
-    setState(() {
-      _messages.add(Message(role: MessageRole.user, content: text));
-      assistantIndex = _messages.length;
-      _messages.add(const Message(role: MessageRole.assistant, content: ''));
-      _isSending = true;
-    });
     _inputController.clear();
-    await _persistConversation();
-    _scrollToBottom();
-
-    if (config.apiKey.isEmpty) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _messages[assistantIndex] = Message(
-          role: MessageRole.assistant,
-          content: '这是 $_selectedModel 的本地演示回复。配置 API Key 后，这里会显示流式结果。',
-        );
-        _isSending = false;
-      });
-      await _persistConversation();
-      return;
-    }
-
-    final List<Message> context = List<Message>.from(_messages)
-      ..removeAt(assistantIndex);
-    final buffer = StringBuffer();
-    try {
-      final client = LlmClient(config: config);
-      await for (final String delta in client.chatStream(context)) {
-        if (!mounted) {
-          return;
-        }
-        buffer.write(delta);
-        setState(() {
-          _messages[assistantIndex] = Message(
-            role: MessageRole.assistant,
-            content: buffer.toString(),
-          );
-        });
-      }
-      if (buffer.isEmpty && mounted) {
-        setState(() {
-          _messages[assistantIndex] = const Message(
-            role: MessageRole.assistant,
-            content: '模型没有返回文本。',
-          );
-        });
-      }
-    } catch (error) {
-      if (mounted) {
-        setState(() {
-          _messages[assistantIndex] = Message(
-            role: MessageRole.assistant,
-            content: '请求失败：$error',
-          );
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSending = false);
-        await _persistConversation();
-        _scrollToBottom();
-      }
-    }
+    await ref.read(chatControllerProvider.notifier).send(text);
   }
 
   void _scrollToBottom() {
@@ -218,6 +91,15 @@ class _ChatHomePageState extends State<ChatHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final ChatState chatState = ref.watch(chatControllerProvider);
+    ref.listen<ChatState>(chatControllerProvider,
+        (ChatState? previous, ChatState next) {
+      if (previous == null ||
+          previous.messages.length != next.messages.length ||
+          previous.isSending != next.isSending) {
+        _scrollToBottom();
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -232,12 +114,12 @@ class _ChatHomePageState extends State<ChatHomePage> {
         ),
         actions: <Widget>[
           PopupMenuButton<String>(
-            initialValue: _selectedModel,
+            initialValue: chatState.selectedModel,
             onSelected: (String model) {
-              setState(() => _selectedModel = model);
+              ref.read(chatControllerProvider.notifier).selectModel(model);
             },
             itemBuilder: (BuildContext context) {
-              return _models
+              return ChatController.models
                   .map(
                     (String model) => PopupMenuItem<String>(
                       value: model,
@@ -260,7 +142,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Text(
-                    _selectedModel,
+                    chatState.selectedModel,
                     style: const TextStyle(
                       color: DesignTokens.primary,
                       fontSize: DesignTokens.fontSizeCaption,
@@ -284,16 +166,16 @@ class _ChatHomePageState extends State<ChatHomePage> {
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(DesignTokens.space3),
-              itemCount: _messages.length,
+              itemCount: chatState.messages.length,
               itemBuilder: (BuildContext context, int index) {
-                return _MessageBubble(message: _messages[index]);
+                return _MessageBubble(message: chatState.messages[index]);
               },
             ),
           ),
           _InputBar(
             controller: _inputController,
             onSend: _sendMessage,
-            isSending: _isSending,
+            isSending: chatState.isSending,
             onVoice: () => _showComingSoon('语音输入'),
           ),
         ],
