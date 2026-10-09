@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,7 +24,13 @@ void main() {
     await tester.pump();
 
     expect(find.text('测试消息'), findsOneWidget);
-    expect(find.textContaining('本地演示回复'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is MarkdownBody && widget.data.contains('本地演示回复'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('switches the selected model', (WidgetTester tester) async {
@@ -38,7 +45,14 @@ void main() {
     await tester.tap(find.byIcon(Icons.send));
     await tester.pump();
 
-    expect(find.textContaining('这是 Qwen2.5 的本地演示回复'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is MarkdownBody &&
+            widget.data.contains('这是 Qwen2.5 的本地演示回复'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('restores the persisted conversation on startup',
@@ -57,6 +71,12 @@ void main() {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('已保存的会话消息'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is MarkdownBody && widget.data.contains('已保存的会话消息'),
+      ),
+      findsOneWidget,
+    );
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/models/message.dart';
@@ -233,14 +234,31 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 ),
               ),
-            Text(
-              message.content,
-              style: TextStyle(
-                color: foreground,
-                fontSize: DesignTokens.fontSizeBody,
-                height: 1.5,
+            if (isUser)
+              Text(
+                message.content,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: DesignTokens.fontSizeBody,
+                  height: 1.5,
+                ),
+              )
+            else
+              MarkdownBody(
+                data: message.content,
+                styleSheet: MarkdownStyleSheet(
+                  p: TextStyle(
+                    color: foreground,
+                    fontSize: DesignTokens.fontSizeBody,
+                    height: 1.5,
+                  ),
+                  code: const TextStyle(
+                    color: DesignTokens.inkDark,
+                    fontSize: DesignTokens.fontSizeBody,
+                    backgroundColor: DesignTokens.lightBg,
+                  ),
+                ),
               ),
-            ),
           ],
         ),
       ),
