@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'core/models/message.dart';
+import 'theme/design_tokens.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -7,109 +10,313 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'ChatFlow',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        scaffoldBackgroundColor: DesignTokens.lightBg,
+        colorScheme: ColorScheme.fromSeed(seedColor: DesignTokens.primary),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: DesignTokens.lightSurface,
+          foregroundColor: DesignTokens.inkDark,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const ChatHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class ChatHomePage extends StatefulWidget {
+  const ChatHomePage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ChatHomePage> createState() => _ChatHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ChatHomePageState extends State<ChatHomePage> {
+  static const List<String> _models = <String>[
+    'DeepSeek-R1',
+    'Qwen2.5',
+    'Gemini 2.0 Flash',
+  ];
 
-  void _incrementCounter() {
+  final TextEditingController _inputController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final List<Message> _messages = <Message>[
+    const Message(
+      role: MessageRole.user,
+      content: '帮我写一段 Flutter 流式对话的要点',
+    ),
+    const Message(
+      role: MessageRole.assistant,
+      content: '好的，关键点：\n1. 用 dio 发 SSE 请求\n2. 逐 delta 更新 UI\n3. 处理跨 chunk 半行',
+    ),
+  ];
+
+  String _selectedModel = _models.first;
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    final String text = _inputController.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _messages.add(Message(role: MessageRole.user, content: text));
+      _messages.add(
+        Message(
+          role: MessageRole.assistant,
+          content: '这是 $_selectedModel 的本地演示回复。接入真实模型后，这里会显示流式结果。',
+        ),
+      );
     });
+    _inputController.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature将在后续阶段接入')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+        titleSpacing: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          tooltip: '会话列表',
+          onPressed: () => _showComingSoon('会话列表'),
+        ),
+        title: const Text(
+          'ChatFlow',
+          style: TextStyle(fontSize: DesignTokens.fontSizeTitle),
+        ),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            initialValue: _selectedModel,
+            onSelected: (String model) {
+              setState(() => _selectedModel = model);
+            },
+            itemBuilder: (BuildContext context) {
+              return _models
+                  .map(
+                    (String model) => PopupMenuItem<String>(
+                      value: model,
+                      child: Text(model),
+                    ),
+                  )
+                  .toList();
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: DesignTokens.space2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: DesignTokens.space2,
+                vertical: DesignTokens.space1,
+              ),
+              decoration: BoxDecoration(
+                color: DesignTokens.primary.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusChip),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    _selectedModel,
+                    style: const TextStyle(
+                      color: DesignTokens.primary,
+                      fontSize: DesignTokens.fontSizeCaption,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: DesignTokens.fontSizeBody,
+                    color: DesignTokens.primary,
+                  ),
+                ],
+              ),
             ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(DesignTokens.space3),
+              itemCount: _messages.length,
+              itemBuilder: (BuildContext context, int index) {
+                return _MessageBubble(message: _messages[index]);
+              },
+            ),
+          ),
+          _InputBar(
+            controller: _inputController,
+            onSend: _sendMessage,
+            onVoice: () => _showComingSoon('语音输入'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessageBubble extends StatelessWidget {
+  const _MessageBubble({required this.message});
+
+  final Message message;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isUser = message.role == MessageRole.user;
+    final Color foreground =
+        isUser ? DesignTokens.lightSurface : DesignTokens.inkDark;
+
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 360),
+        margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space3,
+          vertical: DesignTokens.space2,
+        ),
+        decoration: BoxDecoration(
+          color: isUser ? DesignTokens.userBubble : DesignTokens.aiBubbleLight,
+          border: isUser ? null : Border.all(color: DesignTokens.lightBorder),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(DesignTokens.radius),
+            topRight: const Radius.circular(DesignTokens.radius),
+            bottomLeft: Radius.circular(
+              isUser ? DesignTokens.radius : DesignTokens.radiusSmall,
+            ),
+            bottomRight: Radius.circular(
+              isUser ? DesignTokens.radiusSmall : DesignTokens.radius,
+            ),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            if (!isUser)
+              const Padding(
+                padding: EdgeInsets.only(bottom: DesignTokens.space1),
+                child: Text(
+                  'AI',
+                  style: TextStyle(
+                    color: DesignTokens.accent,
+                    fontSize: DesignTokens.fontSizeCaption,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              message.content,
+              style: TextStyle(
+                color: foreground,
+                fontSize: DesignTokens.fontSizeBody,
+                height: 1.5,
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class _InputBar extends StatelessWidget {
+  const _InputBar({
+    required this.controller,
+    required this.onSend,
+    required this.onVoice,
+  });
+
+  final TextEditingController controller;
+  final VoidCallback onSend;
+  final VoidCallback onVoice;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.space2),
+      decoration: const BoxDecoration(
+        color: DesignTokens.lightSurface,
+        border: Border(top: BorderSide(color: DesignTokens.lightBorder)),
+      ),
+      child: Row(
+        children: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.mic_none),
+            color: DesignTokens.subText,
+            tooltip: '语音输入',
+            onPressed: onVoice,
+          ),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => onSend(),
+              decoration: InputDecoration(
+                hintText: '输入消息…',
+                filled: true,
+                fillColor: DesignTokens.lightBg,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: DesignTokens.space3,
+                  vertical: DesignTokens.space2,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusInput),
+                  borderSide: const BorderSide(
+                    color: DesignTokens.lightBorder,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusInput),
+                  borderSide: const BorderSide(
+                    color: DesignTokens.lightBorder,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusInput),
+                  borderSide: const BorderSide(color: DesignTokens.primary),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: DesignTokens.space1),
+          IconButton(
+            icon: const Icon(Icons.send),
+            color: DesignTokens.primary,
+            tooltip: '发送',
+            onPressed: onSend,
+          ),
+        ],
+      ),
     );
   }
 }
