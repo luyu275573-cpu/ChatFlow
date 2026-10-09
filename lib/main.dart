@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'core/llm/llm_client.dart';
+import 'core/models/llm_config.dart';
 import 'core/models/message.dart';
 import 'theme/design_tokens.dart';
 
@@ -44,6 +46,11 @@ class _ChatHomePageState extends State<ChatHomePage> {
     'Qwen2.5',
     'Gemini 2.0 Flash',
   ];
+  static const Map<String, LlmConfig> _modelConfigs = <String, LlmConfig>{
+    'DeepSeek-R1': LlmConfig.deepSeek,
+    'Qwen2.5': LlmConfig.qwen,
+    'Gemini 2.0 Flash': LlmConfig.gemini,
+  };
 
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -59,6 +66,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
   ];
 
   String _selectedModel = _models.first;
+  bool _isSending = false;
 
   @override
   void dispose() {
@@ -67,22 +75,83 @@ class _ChatHomePageState extends State<ChatHomePage> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
+    if (_isSending) {
+      return;
+    }
     final String text = _inputController.text.trim();
     if (text.isEmpty) {
       return;
     }
 
+    final LlmConfig config = _modelConfigs[_selectedModel]!;
+    late final int assistantIndex;
     setState(() {
       _messages.add(Message(role: MessageRole.user, content: text));
-      _messages.add(
-        Message(
-          role: MessageRole.assistant,
-          content: '这是 $_selectedModel 的本地演示回复。接入真实模型后，这里会显示流式结果。',
-        ),
-      );
+      assistantIndex = _messages.length;
+      _messages.add(const Message(role: MessageRole.assistant, content: ''));
+      _isSending = true;
     });
     _inputController.clear();
+    _scrollToBottom();
+
+    if (config.apiKey.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _messages[assistantIndex] = Message(
+          role: MessageRole.assistant,
+          content: '这是 $_selectedModel 的本地演示回复。配置 API Key 后，这里会显示流式结果。',
+        );
+        _isSending = false;
+      });
+      return;
+    }
+
+    final List<Message> context = List<Message>.from(_messages)
+      ..removeAt(assistantIndex);
+    final buffer = StringBuffer();
+    try {
+      final client = LlmClient(config: config);
+      await for (final String delta in client.chatStream(context)) {
+        if (!mounted) {
+          return;
+        }
+        buffer.write(delta);
+        setState(() {
+          _messages[assistantIndex] = Message(
+            role: MessageRole.assistant,
+            content: buffer.toString(),
+          );
+        });
+      }
+      if (buffer.isEmpty && mounted) {
+        setState(() {
+          _messages[assistantIndex] = const Message(
+            role: MessageRole.assistant,
+            content: '模型没有返回文本。',
+          );
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _messages[assistantIndex] = Message(
+            role: MessageRole.assistant,
+            content: '请求失败：$error',
+          );
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+        _scrollToBottom();
+      }
+    }
+  }
+
+  void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -177,6 +246,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
           _InputBar(
             controller: _inputController,
             onSend: _sendMessage,
+            isSending: _isSending,
             onVoice: () => _showComingSoon('语音输入'),
           ),
         ],
@@ -253,11 +323,13 @@ class _InputBar extends StatelessWidget {
   const _InputBar({
     required this.controller,
     required this.onSend,
+    required this.isSending,
     required this.onVoice,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
+  final bool isSending;
   final VoidCallback onVoice;
 
   @override
@@ -313,7 +385,7 @@ class _InputBar extends StatelessWidget {
             icon: const Icon(Icons.send),
             color: DesignTokens.primary,
             tooltip: '发送',
-            onPressed: onSend,
+            onPressed: isSending ? null : onSend,
           ),
         ],
       ),
