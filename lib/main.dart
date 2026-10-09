@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'core/llm/llm_client.dart';
+import 'core/memory/conversation_memory.dart';
 import 'core/models/llm_config.dart';
 import 'core/models/message.dart';
+import 'shared/services/conversation_storage.dart';
 import 'theme/design_tokens.dart';
 
 void main() {
@@ -65,14 +67,56 @@ class _ChatHomePageState extends State<ChatHomePage> {
     ),
   ];
 
+  ConversationStorage? _conversationStorage;
   String _selectedModel = _models.first;
   bool _isSending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreConversation();
+  }
 
   @override
   void dispose() {
     _inputController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _restoreConversation() async {
+    try {
+      final ConversationStorage storage = await ConversationStorage.create();
+      final ConversationMemory memory = await storage.load();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _conversationStorage = storage;
+        if (memory.messages.isNotEmpty) {
+          _messages
+            ..clear()
+            ..addAll(memory.messages);
+        }
+      });
+      if (memory.messages.isEmpty) {
+        await storage.save(ConversationMemory(_messages));
+      }
+    } catch (_) {
+      // Keep the local demo usable when a platform has no storage plugin.
+    }
+  }
+
+  Future<void> _persistConversation() async {
+    final ConversationStorage? storage = _conversationStorage;
+    if (storage == null) {
+      return;
+    }
+    try {
+      await storage.save(ConversationMemory(_messages));
+    } catch (_) {
+      // A storage failure must not turn a successful chat request into an error.
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -93,6 +137,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
       _isSending = true;
     });
     _inputController.clear();
+    await _persistConversation();
     _scrollToBottom();
 
     if (config.apiKey.isEmpty) {
@@ -106,6 +151,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
         );
         _isSending = false;
       });
+      await _persistConversation();
       return;
     }
 
@@ -146,6 +192,7 @@ class _ChatHomePageState extends State<ChatHomePage> {
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
+        await _persistConversation();
         _scrollToBottom();
       }
     }

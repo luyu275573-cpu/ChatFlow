@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:chatflow/main.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   testWidgets('sends a message and shows the local reply',
       (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
@@ -32,5 +39,24 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('这是 Qwen2.5 的本地演示回复'), findsOneWidget);
+  });
+
+  testWidgets('restores the persisted conversation on startup',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'chatflow.conversation.v1': jsonEncode(<String, Object>{
+        'messages': <Map<String, String>>[
+          <String, String>{
+            'role': 'assistant',
+            'content': '已保存的会话消息',
+          },
+        ],
+      }),
+    });
+
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('已保存的会话消息'), findsOneWidget);
   });
 }
