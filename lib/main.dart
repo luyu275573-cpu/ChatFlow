@@ -618,6 +618,16 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
                                 : DesignTokens.subText,
                           ),
                         ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.privacy_tip_outlined),
+                          title: const Text('隐私与数据'),
+                          subtitle: const Text('查看本地存储与第三方模型请求说明'),
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            _showPrivacyPolicy();
+                          },
+                        ),
                         const SizedBox(height: DesignTokens.space2),
                         Text(
                           'API Key 会保存在本机偏好设置中，生产环境建议使用服务端代理或短期凭据。',
@@ -656,6 +666,34 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
       apiKeyController.dispose();
       promptController.dispose();
     }
+  }
+
+  Future<void> _showPrivacyPolicy() async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('隐私与数据说明'),
+          content: const SizedBox(
+            width: 520,
+            child: SingleChildScrollView(
+              child: Text(
+                'ChatFlow 会在本机保存会话、本地资料和模型设置，以便恢复使用。\n\n'
+                '发送消息时，当前会话内容、System Prompt 以及命中的本地资料片段会发送到你选择的第三方模型服务商。请不要提交身份证号、支付信息、密码或其他敏感内容。\n\n'
+                'API Key 仅用于请求模型服务，不会写入应用日志；运行时设置会保存在本机偏好设置中。生产环境建议使用服务端代理或平台安全存储，并使用可撤销的短期凭据。\n\n'
+                '删除会话或本地资料后，应用不再从当前列表中发送对应内容；清除应用数据可以移除本机保存的偏好设置。',
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('知道了'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

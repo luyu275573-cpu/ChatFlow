@@ -135,8 +135,32 @@ void main() {
     expect(find.text('System Prompt'), findsOneWidget);
     expect(find.text('跟随系统'), findsOneWidget);
 
+    await tester.drag(
+      find.byType(SingleChildScrollView).last,
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('保存设置'));
     await tester.pumpAndSettle();
     expect(find.text('模型设置'), findsNothing);
+  });
+
+  testWidgets('opens the in-app privacy explanation',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('模型设置'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('隐私与数据'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('隐私与数据说明'), findsOneWidget);
+    expect(find.textContaining('第三方模型服务商'), findsOneWidget);
+    expect(find.text('知道了'), findsOneWidget);
+
+    await tester.tap(find.text('知道了'));
+    await tester.pumpAndSettle();
+    expect(find.text('隐私与数据说明'), findsNothing);
   });
 }
