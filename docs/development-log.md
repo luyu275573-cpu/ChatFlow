@@ -3,6 +3,16 @@
 > 本文件按日期追加，日期使用 Asia/Shanghai。每条记录包含任务、改动文件、验证结果、风险和 commit；计划使用 `tasks.md` 管理。
 > 历史基线根据 Git 历史和本会话实际执行结果回填；未保留的早期原始日志不补造。提交前标注“随本任务提交”，提交后在后续记录提交中补入实际 SHA。
 
+## 2026-10-11
+
+### 任务：语音输入与播报适配
+
+- **改动文件**：`lib/shared/services/voice_service.dart`、`lib/main.dart`、`android/app/src/main/AndroidManifest.xml`、`pubspec.yaml`、`pubspec.lock`、对应测试、`tasks.md`。
+- **改动**：锁定 Dart 2.19 兼容的 `speech_to_text 5.6.1` 和 `flutter_tts 3.8.5`；新增语音服务适配、Android 麦克风权限、输入栏录音填词和助手气泡播报按钮。插件初始化或调用失败时返回降级结果，不阻断文字聊天。
+- **验证结果**：`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 44 项通过；`flutter build web` 退出码 0。原始输出见 [验证索引](qa/README.md)。
+- **风险**：上游两个插件均未声明 OHOS 平台，鸿蒙端只能提示不可用；Android/OHOS 真实语音仍需解决 Gradle 回环和 DevEco 签名门禁后复测；未把模拟器单测当作麦克风或扬声器验收。
+- **commit**：`8b8b19d`。
+
 ## 2026-10-10
 
 ### 任务：预设 Prompt 模板

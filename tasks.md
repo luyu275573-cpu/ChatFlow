@@ -30,8 +30,8 @@
 
 - [done] RAG 核心：文档片段检索及生成请求上下文的纯 Dart 接口。
 - [done] RAG 接入聊天发送流程和本地文档管理；发送请求会注入命中资料上下文。
-- [in_progress] 语音输入（`speech_to_text`）。
-- [in_progress] 语音播报（`flutter_tts`）。
+- [done] 语音输入（`speech_to_text`，Android/Web 适配层）。
+- [done] 语音播报（`flutter_tts`，Android/Web 适配层）。
 
 ## 验收门禁
 
