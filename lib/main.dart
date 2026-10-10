@@ -7,6 +7,7 @@ import 'core/models/message.dart';
 import 'core/models/prompt_template.dart';
 import 'core/rag/local_document.dart';
 import 'features/chat/application/chat_controller.dart';
+import 'shared/services/voice_service.dart';
 import 'theme/design_tokens.dart';
 
 void main() {
@@ -58,9 +59,13 @@ class ChatHomePage extends ConsumerStatefulWidget {
 class _ChatHomePageState extends ConsumerState<ChatHomePage> {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final VoiceService _voiceService = VoiceService();
+  bool _isListening = false;
 
   @override
   void dispose() {
+    _voiceService.stopListening();
+    _voiceService.stopSpeaking();
     _inputController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -109,6 +114,44 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
     );
   }
 
+  Future<void> _toggleVoiceInput() async {
+    if (_isListening) {
+      await _voiceService.stopListening();
+      if (mounted) {
+        setState(() => _isListening = false);
+      }
+      return;
+    }
+    final bool started = await _voiceService.startListening(
+      onText: (String text) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _inputController.text = text;
+          _inputController.selection = TextSelection.collapsed(
+            offset: text.length,
+          );
+        });
+      },
+      onListeningChanged: (bool listening) {
+        if (mounted) {
+          setState(() => _isListening = listening);
+        }
+      },
+    );
+    if (!started && mounted) {
+      _showVoiceUnavailable('语音输入');
+    }
+  }
+
+  Future<void> _speakMessage(String text) async {
+    final bool started = await _voiceService.speak(text);
+    if (!started && mounted) {
+      _showVoiceUnavailable('语音播报');
+    }
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -121,9 +164,9 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
     });
   }
 
-  void _showComingSoon(String feature) {
+  void _showVoiceUnavailable(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature将在后续阶段接入')),
+      SnackBar(content: Text('当前平台暂不支持$feature')),
     );
   }
 
@@ -502,7 +545,12 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
               padding: const EdgeInsets.all(DesignTokens.space3),
               itemCount: chatState.messages.length,
               itemBuilder: (BuildContext context, int index) {
-                return _MessageBubble(message: chatState.messages[index]);
+                return _MessageBubble(
+                  message: chatState.messages[index],
+                  onSpeak: chatState.messages[index].role == MessageRole.user
+                      ? null
+                      : () => _speakMessage(chatState.messages[index].content),
+                );
               },
             ),
           ),
@@ -511,7 +559,8 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
             onSend: _sendMessage,
             isSending: chatState.isSending,
             onPrompt: _showPrompts,
-            onVoice: () => _showComingSoon('语音输入'),
+            isListening: _isListening,
+            onVoice: _toggleVoiceInput,
           ),
         ],
       ),
@@ -520,9 +569,10 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message});
+  const _MessageBubble({required this.message, this.onSpeak});
 
   final Message message;
+  final VoidCallback? onSpeak;
 
   @override
   Widget build(BuildContext context) {
@@ -577,7 +627,7 @@ class _MessageBubble extends StatelessWidget {
                   height: 1.5,
                 ),
               )
-            else
+            else ...<Widget>[
               MarkdownBody(
                 data: message.content,
                 styleSheet: MarkdownStyleSheet(
@@ -593,6 +643,17 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onSpeak != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.volume_up_outlined),
+                    tooltip: '语音播报',
+                    color: DesignTokens.subText,
+                    onPressed: onSpeak,
+                  ),
+                ),
+            ],
           ],
         ),
       ),
@@ -606,6 +667,7 @@ class _InputBar extends StatelessWidget {
     required this.onSend,
     required this.isSending,
     required this.onPrompt,
+    required this.isListening,
     required this.onVoice,
   });
 
@@ -613,6 +675,7 @@ class _InputBar extends StatelessWidget {
   final VoidCallback onSend;
   final bool isSending;
   final VoidCallback onPrompt;
+  final bool isListening;
   final VoidCallback onVoice;
 
   @override
@@ -633,7 +696,7 @@ class _InputBar extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.mic_none),
-            color: DesignTokens.subText,
+            color: isListening ? DesignTokens.accent : DesignTokens.subText,
             tooltip: '语音输入',
             onPressed: onVoice,
           ),

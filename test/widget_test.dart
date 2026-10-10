@@ -112,4 +112,13 @@ void main() {
     final TextField input = tester.widget<TextField>(find.byType(TextField));
     expect(input.controller?.text, contains('请总结以下内容'));
   });
+
+  testWidgets('exposes voice input and speech controls',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('语音输入'), findsOneWidget);
+    expect(find.byTooltip('语音播报'), findsOneWidget);
+  });
 }
