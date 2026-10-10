@@ -1,5 +1,17 @@
 # ChatFlow 验证证据
 
+## 2026-10-11：应用内隐私说明入口
+
+对应代码提交：`4d1e649`。
+
+| 门禁 | 命令 | 结果 | 原始输出 |
+| --- | --- | --- | --- |
+| L1 | `flutter analyze` | 退出码 0，无分析问题 | [分析输出](2026-10-11-privacy-analyze.txt) |
+| L2 | `flutter test --reporter expanded` | 退出码 0，55 项测试通过 | [测试输出](2026-10-11-privacy-test.txt) |
+| Web 构建 | `flutter build web` | 退出码 0，产物目录 `build/web/` | [构建输出](2026-10-11-privacy-web-build.txt) |
+
+本次覆盖设置弹层打开隐私说明、第三方模型请求范围、本地存储和 API Key 风险提示。未运行 Android/OHOS 模拟器、真实供应商 API 或人工设备测试。
+
 ## 2026-10-11：模型设置与运行时配置
 
 对应代码提交：`e61fa6b`。

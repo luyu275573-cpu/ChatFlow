@@ -5,6 +5,14 @@
 
 ## 2026-10-11
 
+### 任务：应用内隐私说明入口
+
+- **改动文件**：`lib/main.dart`、`test/widget_test.dart`、`tasks.md`。
+- **改动**：在模型设置弹层增加“隐私与数据”入口，说明本地会话/资料/模型设置保存、第三方模型请求内容、API Key 风险和删除方式；保留当前运行时配置安全边界，不新增依赖。
+- **验证结果**：`dart format` 通过；`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 55 项通过；`flutter build web` 退出码 0，产物目录为 `build/web/`。原始输出见 `docs/qa/2026-10-11-privacy-*`。未运行 Android/OHOS 设备、真实供应商 API 或人工 UI 测试。
+- **风险**：当前内容是应用内静态说明，不替代法务审核后的正式隐私政策、用户协议和平台隐私标签；API Key 仍由本地偏好设置保存，生产环境需服务端代理或安全存储。
+- **commit**：`4d1e649`（代码与任务状态）；记录与验证证据随本任务提交。
+
 ### 任务：模型设置与运行时配置持久化
 
 - **改动文件**：`lib/core/models/llm_config.dart`、`lib/shared/services/model_config_storage.dart`、`lib/features/chat/application/chat_controller.dart`、`lib/main.dart`、`test/shared/services/model_config_storage_test.dart`、`test/features/chat/application/chat_controller_test.dart`、`test/widget_test.dart`、`tasks.md`。

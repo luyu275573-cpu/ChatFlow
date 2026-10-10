@@ -1,0 +1,6 @@
+Flutter assets will be downloaded from https://storage.flutter-io.cn. Make sure you trust this source!
+
+ Building with sound null safety 
+
+Compiling lib\main.dart for the Web...                           2,998ms
+Exit code: 0
