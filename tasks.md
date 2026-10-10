@@ -36,7 +36,7 @@
 ## 验收门禁
 
 - [done] L1：`flutter analyze` 零错误。
-- [done] L2：核心层、Controller、存储和 Widget 共 39 项测试通过（2026-10-10）。
+- [done] L2：核心层、Controller、存储和 Widget 共 44 项测试通过（2026-10-11）。
 - [done] Web：`flutter build web` 通过。
 - [blocked] Android：模拟器已发现，但 Gradle 报 `Unable to establish loopback connection`；恢复条件：解决本机 Java/Gradle 回环连接后重新运行 `flutter run -d emulator-5554`。
 - [blocked] OHOS：模拟器已发现，但 HAP 因未配置 DevEco 调试签名而未生成；恢复条件：在 DevEco Studio 的 Signing Configs 勾选 Automatically generate signature 后重新运行 `flutter run -d 127.0.0.1:5557`。
