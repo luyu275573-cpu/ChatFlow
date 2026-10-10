@@ -11,7 +11,7 @@
 - **改动**：增加翻译、总结、代码审查三项纯 Dart Prompt 模板；输入栏新增选择入口，选中后将指令填入输入框供用户继续编辑或直接发送。
 - **验证结果**：`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 42 项通过；`flutter build web` 退出码 0。原始输出见 [验证索引](qa/README.md)。
 - **风险**：模板当前只提供固定中文指令，没有用户自定义模板和持久化；Android Gradle loopback 与 OHOS 调试签名阻塞仍未解决。
-- **commit**：`1467b52`。
+- **commit**：`1467b52`（代码）；`8106211`（记录与验证证据）。
 
 ### 任务：RAG 应用接入与本地资料管理
 
