@@ -38,19 +38,19 @@
 ## 4. 核心功能清单（按 AI 渐入三阶段）
 
 ### 4.1 阶段一：AI 入门（云端 LLM 调用）
-- [ ] 多模型接入（DeepSeek-R1 / 通义 Qwen2.5 / Gemini 2.0 Flash）
-- [ ] 单轮对话（发送 → 一次性返回）
-- [ ] 会话管理 + 本地持久化
+- [x] 多模型接入（DeepSeek-R1 / 通义 Qwen2.5 / Gemini 2.0 Flash）
+- [x] 单轮对话（发送 → 一次性返回）
+- [x] 会话管理 + 本地持久化（OHOS 持久化仍待平台适配）
 
 ### 4.2 阶段二：流式体验
-- [ ] SSE 流式输出（逐字渲染 + Markdown）
-- [ ] 多会话 + 上下文管理
-- [ ] 预设 Prompt 模板（翻译 / 总结 / 代码审查）
+- [x] SSE 流式输出（逐字渲染 + Markdown）
+- [x] 多会话 + 上下文管理
+- [x] 预设 Prompt 模板（翻译 / 总结 / 代码审查）
 
 ### 4.3 阶段三：进阶能力
-- [ ] 语音输入（speech_to_text）/ 语音播报（flutter_tts）
-- [ ] RAG 雏形（本地文档片段检索注入）
-- [ ] 桌面端支持 + Web 部署 Demo
+- [x] 语音输入（speech_to_text）/ 语音播报（flutter_tts）（Android/Web；OHOS 无上游实现时降级）
+- [x] RAG 雏形（本地文档片段检索注入）
+- [ ] 桌面端支持 + Web 部署 Demo（Web 构建已通过，桌面端未验收）
 
 > ⚠️ 时间红线：阶段一只能用 DeepSeek-R1 / Qwen2.5 / Gemini 2.0 Flash；**Qwen3（2025.4）、Gemini 2.5（2025.3 后）只能出现在阶段三后期**。
 

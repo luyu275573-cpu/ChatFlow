@@ -1,5 +1,20 @@
 # ChatFlow 验证证据
 
+## 2026-10-11：全面审查与代码加固
+
+对应代码提交：`89f994f`。
+
+| 门禁 | 命令/检查 | 结果 | 原始输出 |
+| --- | --- | --- | --- |
+| L1 | `flutter analyze` | 退出码 0，无分析问题 | [分析输出](2026-10-11-audit-analyze.txt) |
+| L2 | `flutter test --reporter expanded` | 退出码 0，50 项测试通过 | [测试输出](2026-10-11-audit-test.txt) |
+| Web 构建 | `flutter build web` | 退出码 0，产物目录 `build/web/` | [构建输出](2026-10-11-audit-web-build.txt) |
+| Android | `flutter run -d emulator-5554 --debug --no-resident` | 失败：Gradle `Unable to establish loopback connection` | [运行输出](2026-10-11-audit-android-run.txt) |
+| OHOS | `flutter run -d 127.0.0.1:5557 --debug --no-resident` | 失败：未配置 DevEco 调试签名，未生成 signed HAP | [运行输出](2026-10-11-audit-ohos-run.txt) |
+| 发布静态扫描 | `inspect-release.ps1 -ProjectRoot ohos` | blocked：模板身份、空签名配置、unsigned/debug HAP、无隐私信号 | [扫描报告](2026-10-11-audit-release-scan-ohos-root.json) |
+
+完整结论、文件行号、设计差距和未解决风险见[审查报告](2026-10-11-audit-report.md)。
+
 ## 2026-10-10：RAG 核心接口
 
 对应代码提交：`f1ab2a2`。

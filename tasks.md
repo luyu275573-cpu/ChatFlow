@@ -5,7 +5,7 @@
 
 ## 本轮完成与后续任务
 
-- [in_progress] 全面代码、安全、布局和发布配置审查；修复可在仓库内闭环的缺陷并留存验证证据。
+- [done] 全面代码、安全、布局和发布配置审查；修复可在仓库内闭环的缺陷并留存验证证据（报告：`docs/qa/2026-10-11-audit-report.md`）。
 - [done] 补全持续记录文件和按日期、任务、文件、验证、风险、commit 编排的开发日志。
 - [done] RAG 核心单元：纯 Dart 文档切分、关键词检索、上下文注入接口及单测。
 - [done] RAG 应用接入：本地文档输入/管理、ChatController 请求注入和 UI 联调。
@@ -34,10 +34,18 @@
 - [done] 语音输入（`speech_to_text`，Android/Web 适配层）。
 - [done] 语音播报（`flutter_tts`，Android/Web 适配层）。
 
+## 审查后续
+
+- [todo] 补齐设计稿中的模型设置页和文生图页，或在首发范围中移除未实现声明。
+- [todo] 增加应用内隐私政策入口，说明本地存储和第三方模型请求。
+- [todo] 提供正式 Android applicationId/签名和 OHOS bundleName/vendor/签名，完成 release 包核验。
+- [todo] 评估服务端代理/短期凭据，避免将长期 API Key 编译进客户端。
+- [todo] 为 OHOS 适配语音和持久化插件，或明确首发降级范围。
+
 ## 验收门禁
 
 - [done] L1：`flutter analyze` 零错误。
-- [done] L2：核心层、Controller、存储和 Widget 共 44 项测试通过（2026-10-11）。
+- [done] L2：核心层、Controller、存储和 Widget 共 50 项测试通过（2026-10-11）。
 - [done] Web：`flutter build web` 通过。
 - [blocked] Android：模拟器已发现，但 Gradle 报 `Unable to establish loopback connection`；恢复条件：解决本机 Java/Gradle 回环连接后重新运行 `flutter run -d emulator-5554`。
 - [blocked] OHOS：模拟器已发现，但 HAP 因未配置 DevEco 调试签名而未生成；恢复条件：在 DevEco Studio 的 Signing Configs 勾选 Automatically generate signature 后重新运行 `flutter run -d 127.0.0.1:5557`。

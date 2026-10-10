@@ -5,6 +5,14 @@
 
 ## 2026-10-11
 
+### 任务：代码、安全、布局和发布配置全面审查
+
+- **改动文件**：`android/app/src/main/AndroidManifest.xml`、`lib/core/llm/llm_client.dart`、`lib/core/llm/sse_parser.dart`、`lib/features/chat/application/chat_controller.dart`、`lib/main.dart`、`lib/theme/design_tokens.dart`、消息/会话/资料模型与存储、对应测试；审查报告和证据见 `docs/qa/2026-10-11-audit-report.md` 及 `docs/qa/2026-10-11-audit-*`。
+- **改动**：补上 Android release INTERNET 权限；为 LLM 请求增加超时和安全错误映射；刷新无尾部分隔行的 SSE 事件；按 session ID 回写流式消息并锁定发送中的模型；增加消息、会话和资料边界校验；聊天主页增加系统深色主题和新会话空状态。
+- **验证结果**：`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 50 项通过；`flutter build web` 退出码 0；Android `flutter run -d emulator-5554 --debug --no-resident` 仍因 `Unable to establish loopback connection` 失败；OHOS `flutter run -d 127.0.0.1:5557 --debug --no-resident` 仍因未配置 DevEco 调试签名、未生成 signed HAP 失败；官方发布规则页面 HTTP 200。原始输出见 `docs/qa/`。
+- **风险**：正式 Android/OHOS 身份、签名、隐私政策和真实设备闭环仍未验证；客户端编译时 API Key 可被提取；`shared_preferences` 明文且无 OHOS 官方实现；设置页、文生图页和逐屏设计截图仍待完成；`flutter_markdown` 已 discontinued。
+- **commit**：`89f994f`（代码）；`f180f30`（边界校验回归测试和测试证据）；记录与其余审查证据随本任务提交。
+
 ### 任务：语音输入与播报适配
 
 - **改动文件**：`lib/shared/services/voice_service.dart`、`lib/main.dart`、`android/app/src/main/AndroidManifest.xml`、`pubspec.yaml`、`pubspec.lock`、对应测试、`tasks.md`。
@@ -122,12 +130,11 @@
 
 ## 当前未完成项
 
-- 阶段三语音输入、语音播报；RAG 应用接入已完成，后续可增加向量检索和文件格式解析。
-- Prompt 模板。
-- 模型设置完整页面、深色主题和设计稿中的文生图页面。
-- Android、OHOS 真实设备运行和截图证据。
-- 三模型实际 API Key 请求及 Web CORS 验证。
-- 发布签名、隐私政策及应用市场上架检查。
+- Android、OHOS 真实设备运行和截图证据；三模型实际 API Key 请求及 Web CORS 验证。
+- 模型设置完整页面、文生图页面、独立流式 typing 指示器和逐屏设计复核。
+- Android/OHOS 正式包名、vendor、release 签名、隐私政策及应用市场上架检查。
+- 生产 API 代理/短期凭据、加密本地存储和 OHOS 语音/持久化适配。
+- RAG 向量检索、文件格式解析和大规模资料索引。
 
 ## 后续记录模板
 

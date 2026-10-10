@@ -1,0 +1,6 @@
+Flutter assets will be downloaded from https://storage.flutter-io.cn. Make sure you trust this source!
+Launching lib\main.dart on 127.0.0.1:5557 in debug mode...
+start hap build...
+请通过DevEco Studio打开ohos工程后配置调试签名(File -> Project Structure -> Signing Configs 勾选Automatically generate signature)
+Running Hvigor task assembleHap...                                 84.9s
+Exception: Failed to get the hap file: G:\ChatFlow\ohos\entry\build\default\outputs\default\entry-default-signed.hap
