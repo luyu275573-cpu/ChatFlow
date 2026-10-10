@@ -12,6 +12,9 @@ class ConversationSession {
   final String title;
   final List<Message> messages;
 
+  static const int maxTitleLength = 200;
+  static const int maxMessages = 500;
+
   ConversationSession copyWith({
     String? title,
     Iterable<Message>? messages,
@@ -36,10 +39,15 @@ class ConversationSession {
     final Object? titleValue = json['title'];
     final Object? rawMessages = json['messages'];
     if (idValue is! String ||
-        idValue.isEmpty ||
+        idValue.trim().isEmpty ||
         titleValue is! String ||
+        titleValue.trim().isEmpty ||
+        titleValue.length > maxTitleLength ||
         rawMessages is! List) {
       throw const FormatException('会话必须包含 id、title 和 messages');
+    }
+    if (rawMessages.length > maxMessages) {
+      throw const FormatException('会话消息数量超过上限');
     }
 
     return ConversationSession(

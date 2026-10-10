@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.chatflow">
+    <!-- Release builds need this permission for LLM requests. The debug/profile
+         manifests also declare it for Flutter tooling, but those manifests are
+         not merged into a release APK. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
    <application
         android:label="chatflow"

@@ -77,4 +77,24 @@ void main() {
 
     expect(result, <String>['你', '好']);
   });
+
+  test('keeps the final delta when the stream has no trailing blank line',
+      () async {
+    final adapter = _FakeAdapter(
+      (_) => ResponseBody.fromString(
+        'data: {"choices":[{"delta":{"content":"最后"}}]}\n',
+        200,
+      ),
+    );
+    final client = LlmClient(
+      config: LlmConfig.deepSeek,
+      dio: Dio()..httpClientAdapter = adapter,
+    );
+
+    final result = await client.chatStream(const <Message>[
+      Message(role: MessageRole.user, content: '测试'),
+    ]).toList();
+
+    expect(result, <String>['最后']);
+  });
 }

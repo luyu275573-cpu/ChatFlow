@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 /// ChatFlow 设计 Token —— UI 中所有颜色必须引用此处，禁止硬编码色值。
 /// 与 docs/design.html 的视觉风格保持一致。
 class DesignTokens {
+  static const Color transparent = Colors.transparent;
+
   // 品牌色
   static const Color primary = Color(0xFF6366F1); // 靛蓝主色
   static const Color accent = Color(0xFF8B5CF6); // 渐变紫

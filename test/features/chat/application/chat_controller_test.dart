@@ -117,4 +117,23 @@ void main() {
       'guide',
     );
   });
+
+  test('does not expose unexpected stream errors in the conversation',
+      () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final controller = ChatController(
+      storage: ConversationStorage(preferences),
+      streamFactory: (_, List<Message> messages) =>
+          Stream<String>.error(Exception('Authorization secret-token')),
+    );
+    addTearDown(controller.dispose);
+
+    await controller.ready;
+    await controller.send('发生错误');
+
+    expect(controller.state.messages.last.content, contains('模型服务暂时不可用'));
+    expect(controller.state.messages.last.content,
+        isNot(contains('secret-token')));
+  });
 }

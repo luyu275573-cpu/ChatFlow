@@ -15,6 +15,7 @@ class ConversationStorage {
   });
 
   static const String sessionsKey = 'chatflow.conversations.v1';
+  static const int maxSessions = 100;
 
   final SharedPreferences _preferences;
   final String key;
@@ -75,14 +76,24 @@ class ConversationStorage {
     if (decoded is! List) {
       throw const FormatException('会话列表存储数据必须是数组');
     }
-    return decoded.map((Object? rawSession) {
+    if (decoded.length > maxSessions) {
+      throw const FormatException('会话数量超过上限');
+    }
+    final Set<String> ids = <String>{};
+    final List<ConversationSession> sessions = <ConversationSession>[];
+    for (final Object? rawSession in decoded) {
       if (rawSession is! Map) {
         throw const FormatException('会话条目必须是对象');
       }
-      return ConversationSession.fromJson(
+      final ConversationSession session = ConversationSession.fromJson(
         Map<String, dynamic>.from(rawSession),
       );
-    }).toList();
+      if (!ids.add(session.id)) {
+        throw const FormatException('会话 ID 不能重复');
+      }
+      sessions.add(session);
+    }
+    return sessions;
   }
 
   Future<void> saveSessions(Iterable<ConversationSession> sessions) async {

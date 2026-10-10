@@ -33,18 +33,31 @@ class _ChatFlowApp extends StatelessWidget {
     return MaterialApp(
       title: 'ChatFlow',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: DesignTokens.lightBg,
-        colorScheme: ColorScheme.fromSeed(seedColor: DesignTokens.primary),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: DesignTokens.lightSurface,
-          foregroundColor: DesignTokens.inkDark,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-        ),
-      ),
+      theme: _theme(Brightness.light),
+      darkTheme: _theme(Brightness.dark),
+      themeMode: ThemeMode.system,
       home: const ChatHomePage(),
+    );
+  }
+
+  ThemeData _theme(Brightness brightness) {
+    final bool isDark = brightness == Brightness.dark;
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      scaffoldBackgroundColor:
+          isDark ? DesignTokens.darkBg : DesignTokens.lightBg,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: DesignTokens.primary,
+        brightness: brightness,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor:
+            isDark ? DesignTokens.darkSurface : DesignTokens.lightSurface,
+        foregroundColor: isDark ? DesignTokens.inkLight : DesignTokens.inkDark,
+        elevation: 0,
+        surfaceTintColor: DesignTokens.transparent,
+      ),
     );
   }
 }
@@ -73,7 +86,7 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
 
   Future<void> _sendMessage() async {
     final String text = _inputController.text;
-    if (text.isEmpty) {
+    if (text.trim().isEmpty) {
       return;
     }
     _inputController.clear();
@@ -492,6 +505,7 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
         actions: <Widget>[
           PopupMenuButton<String>(
             initialValue: chatState.selectedModel,
+            tooltip: '选择模型',
             onSelected: (String model) {
               ref.read(chatControllerProvider.notifier).selectModel(model);
             },
@@ -540,19 +554,24 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
       body: Column(
         children: <Widget>[
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(DesignTokens.space3),
-              itemCount: chatState.messages.length,
-              itemBuilder: (BuildContext context, int index) {
-                return _MessageBubble(
-                  message: chatState.messages[index],
-                  onSpeak: chatState.messages[index].role == MessageRole.user
-                      ? null
-                      : () => _speakMessage(chatState.messages[index].content),
-                );
-              },
-            ),
+            child: chatState.messages.isEmpty
+                ? const Center(child: Text('开始一段新对话'))
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(DesignTokens.space3),
+                    itemCount: chatState.messages.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return _MessageBubble(
+                        message: chatState.messages[index],
+                        onSpeak:
+                            chatState.messages[index].role == MessageRole.user
+                                ? null
+                                : () => _speakMessage(
+                                      chatState.messages[index].content,
+                                    ),
+                      );
+                    },
+                  ),
           ),
           _InputBar(
             controller: _inputController,
@@ -577,8 +596,10 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isUser = message.role == MessageRole.user;
-    final Color foreground =
-        isUser ? DesignTokens.lightSurface : DesignTokens.inkDark;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color foreground = isUser
+        ? DesignTokens.lightSurface
+        : (isDark ? DesignTokens.inkLight : DesignTokens.inkDark);
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -590,8 +611,18 @@ class _MessageBubble extends StatelessWidget {
           vertical: DesignTokens.space2,
         ),
         decoration: BoxDecoration(
-          color: isUser ? DesignTokens.userBubble : DesignTokens.aiBubbleLight,
-          border: isUser ? null : Border.all(color: DesignTokens.lightBorder),
+          color: isUser
+              ? DesignTokens.userBubble
+              : (isDark
+                  ? DesignTokens.aiBubbleDark
+                  : DesignTokens.aiBubbleLight),
+          border: isUser
+              ? null
+              : Border.all(
+                  color: isDark
+                      ? DesignTokens.darkBorder
+                      : DesignTokens.lightBorder,
+                ),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(DesignTokens.radius),
             topRight: const Radius.circular(DesignTokens.radius),
@@ -636,10 +667,11 @@ class _MessageBubble extends StatelessWidget {
                     fontSize: DesignTokens.fontSizeBody,
                     height: 1.5,
                   ),
-                  code: const TextStyle(
-                    color: DesignTokens.inkDark,
+                  code: TextStyle(
+                    color: foreground,
                     fontSize: DesignTokens.fontSizeBody,
-                    backgroundColor: DesignTokens.lightBg,
+                    backgroundColor:
+                        isDark ? DesignTokens.darkBg : DesignTokens.lightBg,
                   ),
                 ),
               ),
@@ -680,11 +712,16 @@ class _InputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space2),
-      decoration: const BoxDecoration(
-        color: DesignTokens.lightSurface,
-        border: Border(top: BorderSide(color: DesignTokens.lightBorder)),
+      decoration: BoxDecoration(
+        color: isDark ? DesignTokens.darkSurface : DesignTokens.lightSurface,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? DesignTokens.darkBorder : DesignTokens.lightBorder,
+          ),
+        ),
       ),
       child: Row(
         children: <Widget>[
@@ -708,21 +745,25 @@ class _InputBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: '输入消息…',
                 filled: true,
-                fillColor: DesignTokens.lightBg,
+                fillColor: isDark ? DesignTokens.darkBg : DesignTokens.lightBg,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: DesignTokens.space3,
                   vertical: DesignTokens.space2,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusInput),
-                  borderSide: const BorderSide(
-                    color: DesignTokens.lightBorder,
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? DesignTokens.darkBorder
+                        : DesignTokens.lightBorder,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusInput),
-                  borderSide: const BorderSide(
-                    color: DesignTokens.lightBorder,
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? DesignTokens.darkBorder
+                        : DesignTokens.lightBorder,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(

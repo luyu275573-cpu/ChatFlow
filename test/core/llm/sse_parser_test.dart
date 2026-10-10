@@ -37,4 +37,11 @@ void main() {
 
     expect(parser.push('data: kept\n\n'), <String>['kept']);
   });
+
+  test('flushes a final data line without a trailing blank line', () {
+    final parser = SseParser();
+
+    expect(parser.push('data: {"delta":"最后一段"}\n'), isEmpty);
+    expect(parser.finish(), <String>['{"delta":"最后一段"}']);
+  });
 }

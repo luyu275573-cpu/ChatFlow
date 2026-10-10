@@ -103,6 +103,9 @@ class ChatController extends StateNotifier<ChatState> {
     'Gemini 2.0 Flash': LlmConfig.gemini,
   };
 
+  /// Keeps request bodies and local persistence bounded on every platform.
+  static const int maxUserMessageLength = 8000;
+
   ConversationStorage? _storage;
   LocalDocumentStorage? _documentStorage;
   final LlmStreamFactory? _streamFactory;
@@ -148,6 +151,13 @@ class ChatController extends StateNotifier<ChatState> {
     if (!mounted) {
       return;
     }
+    if (document.id.trim().isEmpty ||
+        document.id.length > LocalDocument.maxIdLength ||
+        document.content.trim().isEmpty ||
+        document.content.length > LocalDocument.maxContentLength ||
+        (document.source?.length ?? 0) > LocalDocument.maxSourceLength) {
+      return;
+    }
     final List<LocalDocument> documents = state.documents
         .where((LocalDocument item) => item.id != document.id)
         .toList();
@@ -172,7 +182,7 @@ class ChatController extends StateNotifier<ChatState> {
   }
 
   void selectModel(String model) {
-    if (modelConfigs.containsKey(model) && mounted) {
+    if (modelConfigs.containsKey(model) && mounted && !state.isSending) {
       state = state.copyWith(selectedModel: model);
     }
   }
@@ -250,7 +260,7 @@ class ChatController extends StateNotifier<ChatState> {
       return;
     }
     final String trimmed = text.trim();
-    if (trimmed.isEmpty) {
+    if (trimmed.isEmpty || trimmed.length > maxUserMessageLength) {
       return;
     }
 
@@ -259,6 +269,7 @@ class ChatController extends StateNotifier<ChatState> {
       return;
     }
     final LlmConfig config = modelConfigs[state.selectedModel]!;
+    final String modelName = state.selectedModel;
     final List<Message> messages = List<Message>.from(session.messages)
       ..add(Message(role: MessageRole.user, content: trimmed))
       ..add(const Message(role: MessageRole.assistant, content: ''));
@@ -278,10 +289,11 @@ class ChatController extends StateNotifier<ChatState> {
 
     if (config.apiKey.isEmpty && _streamFactory == null) {
       _replaceMessage(
+        session.id,
         assistantIndex,
         Message(
           role: MessageRole.assistant,
-          content: '这是 ${state.selectedModel} 的本地演示回复。配置 API Key 后，这里会显示流式结果。',
+          content: '这是 $modelName 的本地演示回复。配置 API Key 后，这里会显示流式结果。',
         ),
       );
       state = state.copyWith(isSending: false);
@@ -302,7 +314,11 @@ class ChatController extends StateNotifier<ChatState> {
           return;
         }
         buffer.write(delta);
+        if (buffer.length > Message.maxContentLength) {
+          throw const LlmException('模型回复超过本地保存上限');
+        }
         _replaceMessage(
+          session.id,
           assistantIndex,
           Message(
             role: MessageRole.assistant,
@@ -312,6 +328,7 @@ class ChatController extends StateNotifier<ChatState> {
       }
       if (buffer.isEmpty && mounted) {
         _replaceMessage(
+          session.id,
           assistantIndex,
           const Message(
             role: MessageRole.assistant,
@@ -322,10 +339,13 @@ class ChatController extends StateNotifier<ChatState> {
     } catch (error) {
       if (mounted) {
         _replaceMessage(
+          session.id,
           assistantIndex,
           Message(
             role: MessageRole.assistant,
-            content: '请求失败：$error',
+            content: error is LlmException
+                ? '请求失败：${error.message}'
+                : '请求失败：模型服务暂时不可用，请稍后重试。',
           ),
         );
       }
@@ -337,11 +357,17 @@ class ChatController extends StateNotifier<ChatState> {
     }
   }
 
-  void _replaceMessage(int index, Message message) {
+  void _replaceMessage(String sessionId, int index, Message message) {
     if (!mounted) {
       return;
     }
-    final ConversationSession? session = _activeSession;
+    ConversationSession? session;
+    for (final ConversationSession candidate in state.sessions) {
+      if (candidate.id == sessionId) {
+        session = candidate;
+        break;
+      }
+    }
     if (session == null || index >= session.messages.length) {
       return;
     }

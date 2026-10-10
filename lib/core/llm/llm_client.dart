@@ -16,35 +16,58 @@ class LlmException implements Exception {
 }
 
 class LlmClient {
-  LlmClient({required this.config, Dio? dio}) : _dio = dio ?? Dio();
+  LlmClient({required this.config, Dio? dio})
+      : _dio = dio ??
+            Dio(
+              BaseOptions(
+                connectTimeout: const Duration(seconds: 15),
+                sendTimeout: const Duration(seconds: 15),
+                receiveTimeout: const Duration(seconds: 60),
+              ),
+            );
 
   final LlmConfig config;
   final Dio _dio;
 
   Future<String> chat(List<Message> messages) async {
-    final response = await _dio.post<dynamic>(
-      _endpoint,
-      data: _requestBody(messages),
-      options: _requestOptions(),
-    );
-    return _readMessageContent(response.data);
+    try {
+      final response = await _dio.post<dynamic>(
+        _endpoint,
+        data: _requestBody(messages),
+        options: _requestOptions(),
+      );
+      return _readMessageContent(response.data);
+    } catch (error) {
+      throw _asLlmException(error);
+    }
   }
 
   Stream<String> chatStream(List<Message> messages) async* {
-    final response = await _dio.post<ResponseBody>(
-      _endpoint,
-      data: _requestBody(messages, stream: true),
-      options: _requestOptions(responseType: ResponseType.stream),
-    );
-    final ResponseBody? body = response.data;
-    if (body == null) {
-      throw const LlmException('LLM returned an empty stream');
-    }
+    try {
+      final response = await _dio.post<ResponseBody>(
+        _endpoint,
+        data: _requestBody(messages, stream: true),
+        options: _requestOptions(responseType: ResponseType.stream),
+      );
+      final ResponseBody? body = response.data;
+      if (body == null) {
+        throw const LlmException('模型服务返回了空响应');
+      }
 
-    final parser = SseParser();
-    await for (final String chunk
-        in body.stream.cast<List<int>>().transform(utf8.decoder)) {
-      for (final String event in parser.push(chunk)) {
+      final parser = SseParser();
+      await for (final String chunk
+          in body.stream.cast<List<int>>().transform(utf8.decoder)) {
+        for (final String event in parser.push(chunk)) {
+          if (event == '[DONE]') {
+            return;
+          }
+          final String? content = _readDeltaContent(event);
+          if (content != null && content.isNotEmpty) {
+            yield content;
+          }
+        }
+      }
+      for (final String event in parser.finish()) {
         if (event == '[DONE]') {
           return;
         }
@@ -53,6 +76,8 @@ class LlmClient {
           yield content;
         }
       }
+    } catch (error) {
+      throw _asLlmException(error);
     }
   }
 
@@ -95,6 +120,9 @@ class LlmClient {
 
   String? _readDeltaContent(String event) {
     final map = _decodeMap(jsonDecode(event));
+    if (map['error'] != null) {
+      throw const LlmException('模型服务返回错误');
+    }
     final choices = map['choices'];
     if (choices is List && choices.isNotEmpty) {
       final first = choices.first;
@@ -114,5 +142,24 @@ class LlmClient {
       return decoded;
     }
     throw const LlmException('LLM response was not a JSON object');
+  }
+
+  LlmException _asLlmException(Object error) {
+    if (error is LlmException) {
+      return error;
+    }
+    if (error is DioException) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return const LlmException('连接模型服务超时，请检查网络后重试');
+      }
+      final int? statusCode = error.response?.statusCode;
+      if (statusCode != null) {
+        return LlmException('模型服务请求失败（HTTP $statusCode）');
+      }
+      return const LlmException('无法连接模型服务，请检查网络或配置');
+    }
+    return const LlmException('模型请求失败，请稍后重试');
   }
 }
