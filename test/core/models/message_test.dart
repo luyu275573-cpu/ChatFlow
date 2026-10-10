@@ -34,4 +34,19 @@ void main() {
     expect(configured.apiKey, 'test-key');
     expect(configured.temperature, 0.2);
   });
+
+  test('rejects oversized persisted message content', () {
+    final String oversized = List<String>.filled(
+      Message.maxContentLength + 1,
+      'x',
+    ).join();
+
+    expect(
+      () => Message.fromJson(<String, dynamic>{
+        'role': 'user',
+        'content': oversized,
+      }),
+      throwsFormatException,
+    );
+  });
 }

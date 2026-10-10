@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -67,5 +69,18 @@ void main() {
 
     final restored = await storage.loadSessions();
     expect(restored.single.toJson(), sessions.single.toJson());
+  });
+
+  test('rejects duplicate persisted session IDs', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      ConversationStorage.sessionsKey: jsonEncode(<Object>[
+        <String, Object>{'id': 'same', 'title': '一', 'messages': <Object>[]},
+        <String, Object>{'id': 'same', 'title': '二', 'messages': <Object>[]},
+      ]),
+    });
+    final preferences = await SharedPreferences.getInstance();
+    final storage = ConversationStorage(preferences);
+
+    expect(storage.loadSessions(), throwsFormatException);
   });
 }

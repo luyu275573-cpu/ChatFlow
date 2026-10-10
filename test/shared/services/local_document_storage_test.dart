@@ -36,4 +36,17 @@ void main() {
     final malformedStorage = LocalDocumentStorage(malformedPreferences);
     expect(malformedStorage.loadDocuments(), throwsFormatException);
   });
+
+  test('rejects duplicate persisted document IDs', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      LocalDocumentStorage.documentsKey: jsonEncode(<Object>[
+        <String, Object>{'id': 'same', 'content': '一'},
+        <String, Object>{'id': 'same', 'content': '二'},
+      ]),
+    });
+    final preferences = await SharedPreferences.getInstance();
+    final storage = LocalDocumentStorage(preferences);
+
+    expect(storage.loadDocuments(), throwsFormatException);
+  });
 }
