@@ -11,7 +11,7 @@
 - **改动**：增加本地资料模型和 `shared_preferences` 持久化；会话抽屉支持资料新增、删除和列表；Controller 恢复资料后重建检索器，并在真实流式请求前将命中资料插入 system 消息之后。通过可注入流工厂测试请求上下文，未改变无 API Key 时的本地演示回复。
 - **验证结果**：`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 39 项通过；`flutter build web` 退出码 0。`flutter devices` 发现 Android `emulator-5554` 和 OHOS `127.0.0.1:5557`；Android 运行因 Gradle `Unable to establish loopback connection` 失败，OHOS 运行因未配置 DevEco 调试签名、未生成 signed HAP 失败。原始输出见 [验证索引](qa/README.md)。
 - **风险**：`shared_preferences` 当前版本没有 OHOS 实现，鸿蒙端资料持久化仍需适配；检索仍是小规模关键词匹配，不支持向量语义和文件格式解析；三端 L3 需解决环境门禁后复测。
-- **commit**：`6f2823d`。
+- **commit**：`6f2823d`（代码）；`624c0c7`、`21cce70`（记录与验证证据）。
 
 ### 任务：对话主页和多模型基础
 
