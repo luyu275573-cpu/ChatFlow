@@ -77,7 +77,7 @@
 - **改动**：增加本地文本 Unicode 分块和重叠、英文词/中文单字匹配、分数排序和数量限制；将带来源的参考资料插入原有 system 消息之后，不修改会话历史。保持纯 Dart，未新增依赖。
 - **验证结果**：格式化通过；`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 34 项通过（RAG 8 项）；`flutter build web` 退出码 0。原始输出见 [验证索引](qa/README.md)。
 - **风险**：关键词扫描适合小文本集合，无语义向量检索；英文词可能被固定长度分块截断。尚未接入 ChatController 和文档管理 UI，没有真实网络或设备运行证据。Android/OHOS 历史阻塞未在本任务复检。
-- **commit**：随本任务提交（`feat: 增加纯 Dart RAG 检索核心`），提交后回填 SHA。
+- **commit**：`f1ab2a2`（`feat: 增加纯 Dart RAG 检索核心`）。
 
 ## 2026-10-09
 

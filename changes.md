@@ -5,7 +5,7 @@
 - 建立 `tasks.md`、`changes.md`、`PROJECT_CONTEXT.md`、`docs/development-log.md`，回填历史提交和验证范围；基线提交 `686f7a8`。
 - 新增 `lib/core/rag/retriever.dart`：支持 Unicode 安全分块、重叠、英文词/中文单字匹配、排序/限量及保留系统消息的请求上下文注入。
 - 新增 8 项 RAG 测试，全量测试达到 34 项；静态分析和 Web 构建通过，证据保存在 `docs/qa/`。
-- RAG 当前仅完成核心接口，文档输入/管理和聊天请求接入待做；未新增依赖。
+- RAG 当前仅完成核心接口，文档输入/管理和聊天请求接入待做；未新增依赖。代码、持续记录补全和验证证据提交：`f1ab2a2`。
 - 建立纯 Dart `core/` 层：消息模型、LLM 配置、SSE 解析器和 LLM 客户端。
 - 建立聊天主页：模型切换、消息气泡、输入栏和无 API Key 时的本地演示回复。
 - 增加真实 OpenAI 兼容 SSE 流式请求，API Key 通过 `String.fromEnvironment` 读取。
