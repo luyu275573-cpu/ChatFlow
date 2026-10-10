@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/memory/conversation_session.dart';
 import 'core/models/message.dart';
+import 'core/models/prompt_template.dart';
 import 'core/rag/local_document.dart';
 import 'features/chat/application/chat_controller.dart';
 import 'theme/design_tokens.dart';
@@ -72,6 +73,40 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
     }
     _inputController.clear();
     await ref.read(chatControllerProvider.notifier).send(text);
+  }
+
+  Future<void> _showPrompts() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const ListTile(
+                leading: Icon(Icons.auto_awesome_outlined),
+                title: Text('预设 Prompt'),
+                subtitle: Text('选择一个指令填入输入框'),
+              ),
+              ...PromptTemplate.defaults.map(
+                (PromptTemplate template) => ListTile(
+                  leading: const Icon(Icons.bolt_outlined),
+                  title: Text(template.title),
+                  subtitle: Text(template.description),
+                  onTap: () {
+                    _inputController.text = '${template.instruction}\n\n';
+                    _inputController.selection = TextSelection.collapsed(
+                      offset: _inputController.text.length,
+                    );
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _scrollToBottom() {
@@ -475,6 +510,7 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
             controller: _inputController,
             onSend: _sendMessage,
             isSending: chatState.isSending,
+            onPrompt: _showPrompts,
             onVoice: () => _showComingSoon('语音输入'),
           ),
         ],
@@ -569,12 +605,14 @@ class _InputBar extends StatelessWidget {
     required this.controller,
     required this.onSend,
     required this.isSending,
+    required this.onPrompt,
     required this.onVoice,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
   final bool isSending;
+  final VoidCallback onPrompt;
   final VoidCallback onVoice;
 
   @override
@@ -587,6 +625,12 @@ class _InputBar extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            color: DesignTokens.subText,
+            tooltip: '预设 Prompt',
+            onPressed: onPrompt,
+          ),
           IconButton(
             icon: const Icon(Icons.mic_none),
             color: DesignTokens.subText,

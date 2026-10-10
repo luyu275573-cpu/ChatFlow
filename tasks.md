@@ -24,7 +24,7 @@
 - [done] SSE 流式增量渲染。
 - [done] Markdown 回复展示。
 - [done] 多会话上下文管理。
-- [todo] 预设 Prompt 模板（翻译、总结、代码审查）。
+- [in_progress] 预设 Prompt 模板（翻译、总结、代码审查）。
 
 ## 阶段三：进阶能力
 

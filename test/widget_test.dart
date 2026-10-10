@@ -96,4 +96,20 @@ void main() {
 
     expect(find.text('新会话'), findsOneWidget);
   });
+
+  testWidgets('fills a message with a preset prompt',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.auto_awesome_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('预设 Prompt'), findsOneWidget);
+
+    await tester.tap(find.text('总结'));
+    await tester.pumpAndSettle();
+
+    final TextField input = tester.widget<TextField>(find.byType(TextField));
+    expect(input.controller?.text, contains('请总结以下内容'));
+  });
 }
