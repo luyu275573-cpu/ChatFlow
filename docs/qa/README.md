@@ -1,5 +1,17 @@
 # ChatFlow 验证证据
 
+## 2026-10-11：模型设置与运行时配置
+
+对应代码提交：`e61fa6b`。
+
+| 门禁 | 命令 | 结果 | 原始输出 |
+| --- | --- | --- | --- |
+| L1 | `flutter analyze` | 退出码 0，无分析问题 | [分析输出](2026-10-11-model-settings-analyze.txt) |
+| L2 | `flutter test --reporter expanded` | 退出码 0，54 项测试通过 | [测试输出](2026-10-11-model-settings-test.txt) |
+| Web 构建 | `flutter build web` | 退出码 0，产物目录 `build/web/` | [构建输出](2026-10-11-model-settings-web-build.txt) |
+
+本次模拟验收覆盖设置弹层、三模型运行时配置、API Key/温度/System Prompt 持久化恢复和请求注入。按用户要求未运行 Android/OHOS 模拟器、真实供应商 API 或人工设备测试；既有 Android Gradle loopback 与 OHOS 调试签名阻塞仍保留。
+
 ## 2026-10-11：全面审查与代码加固
 
 对应代码提交：`89f994f`。

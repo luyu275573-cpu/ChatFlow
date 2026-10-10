@@ -9,7 +9,7 @@ ChatFlow 是一个 Flutter 跨端 AI 助手，按“云端模型 → SSE 流式 
 - Flutter `3.7.12-ohos`，Dart `2.19.6`，不升级到非 OHOS 分支。
 - Riverpod 2.x、Dio、自定义 SSE 解析、`flutter_markdown`、`shared_preferences`。
 - 模型：DeepSeek-R1、Qwen2.5、Gemini 2.0 Flash。
-- API Key 仅通过 `--dart-define` 对应的环境常量读取。
+- API Key 默认通过 `--dart-define` 注入，也可在模型设置弹层中运行时配置；不得硬编码到源码。
 
 ## 目录职责
 
@@ -30,21 +30,21 @@ lib/
 - 三模型配置切换和可选真实 SSE 对话。
 - SSE 增量渲染与助手 Markdown 展示。
 - 多会话创建、选择、重命名、删除和本地持久化。
-- Riverpod Controller 与 50 项自动化测试。
+- Riverpod Controller 与 54 项自动化测试。
 - `core/rag/retriever.dart`：纯 Dart 文档切分、关键词检索和上下文注入；本地资料通过 `LocalDocumentStorage` 持久化，并已接入真实流式聊天请求。
 - 会话抽屉提供本地资料新增、删除和列表入口。
 - 输入栏提供翻译、总结、代码审查三项预设 Prompt。
 - `shared/services/voice_service.dart` 提供 `speech_to_text` 语音输入和 `flutter_tts` 语音播报适配；插件不可用时返回降级结果。
 - LLM 请求具备连接/发送/接收超时、安全错误映射和 SSE 尾事件刷新；消息、会话和资料具备大小/数量边界。
 - 聊天主页支持系统跟随的浅色/深色主题，空会话显示引导状态。
+- 模型设置弹层支持模型、API Key、温度和 System Prompt 编辑；`ModelConfigStorage` 仅持久化相对内置默认值的运行时覆盖，并恢复当前模型。
 
 ## 下一步与已知限制
 
 - RAG：已完成本地资料管理、持久化、请求注入和抽屉入口；仍是关键词检索，不包含文件格式解析或向量语义检索。
 - 检索以英文单词、数字和中文单字匹配，适合小规模本地文本。
 - 三模型兼容请求已用模拟响应测试，尚未记录实际供应商请求成功的证据。
-- 模型设置完整页面和设计稿中的文生图页面未实现；现有聊天主页已支持系统深色主题。
-- 设计稿中的设置页、文生图页和独立流式 typing 指示器未实现；页面逐屏截图和大字体/横屏矩阵仍待人工验收。
+- 模型设置已提供可用弹层，尚未形成设计稿独立全屏页面；文生图页和独立流式 typing 指示器未实现；页面逐屏截图和大字体/横屏矩阵仍待人工验收。
 - API Key 虽通过 `--dart-define` 注入，但移动端/Web 客户端凭据仍可被提取；生产环境需要服务端代理或可撤销短期凭据。
 - 会话和本地资料当前由 `shared_preferences` 明文保存；OHOS 没有当前锁定版本的官方实现，平台持久化和隐私政策入口仍待补齐。
 - 语音真实设备验收仍待 Android/OHOS 构建门禁恢复；OHOS 当前没有这两个上游插件的实现。

@@ -1,0 +1,57 @@
+Flutter assets will be downloaded from https://storage.flutter-io.cn. Make sure you trust this source!
+00:00 +0: G:\ChatFlow\test\core\llm\llm_client_test.dart: sends an OpenAI-compatible non-stream request
+00:00 +1: G:\ChatFlow\test\core\llm\llm_client_test.dart: yields content deltas from an SSE response
+00:00 +2: G:\ChatFlow\test\core\llm\llm_client_test.dart: keeps the final delta when the stream has no trailing blank line
+00:00 +3: G:\ChatFlow\test\core\llm\sse_parser_test.dart: parses multiple complete events from one chunk
+00:00 +4: G:\ChatFlow\test\core\llm\sse_parser_test.dart: keeps a partial line until the next chunk
+00:00 +5: G:\ChatFlow\test\core\llm\sse_parser_test.dart: joins multiline data and ignores metadata
+00:00 +6: G:\ChatFlow\test\core\llm\sse_parser_test.dart: can reset an in-progress event
+00:00 +7: G:\ChatFlow\test\core\llm\sse_parser_test.dart: flushes a final data line without a trailing blank line
+00:00 +8: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: round-trips messages through JSON
+00:00 +9: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: supports replacing, appending, reading, and clearing messages
+00:00 +10: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: returns a read-only message snapshot
+00:00 +11: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: rejects malformed persisted messages
+00:01 +12: G:\ChatFlow\test\core\memory\conversation_session_test.dart: round-trips a named conversation
+00:01 +13: G:\ChatFlow\test\core\memory\conversation_session_test.dart: rejects malformed sessions
+00:01 +14: G:\ChatFlow\test\core\models\message_test.dart: serializes message roles in the OpenAI shape
+00:01 +15: G:\ChatFlow\test\core\models\message_test.dart: provides the three configured model presets
+00:01 +16: G:\ChatFlow\test\core\models\message_test.dart: copies runtime settings without changing the preset
+00:01 +17: G:\ChatFlow\test\core\models\message_test.dart: rejects oversized persisted message content
+00:01 +18: G:\ChatFlow\test\core\models\prompt_template_test.dart: provides the three requested prompt templates
+00:01 +19: G:\ChatFlow\test\core\models\prompt_template_test.dart: applies an instruction without changing the input content
+00:02 +20: G:\ChatFlow\test\core\rag\local_document_test.dart: serializes and restores a local document
+00:02 +21: G:\ChatFlow\test\core\rag\local_document_test.dart: rejects empty document fields
+00:02 +22: G:\ChatFlow\test\core\rag\retriever_test.dart: retrieves the most relevant Chinese and English chunks
+00:02 +23: G:\ChatFlow\test\core\rag\retriever_test.dart: splits documents and builds an injectable context
+00:02 +24: G:\ChatFlow\test\core\rag\retriever_test.dart: returns no results for empty or unrelated queries
+00:02 +25: G:\ChatFlow\test\core\rag\retriever_test.dart: ranks by matched terms and returns only the requested number
+00:02 +26: G:\ChatFlow\test\core\rag\retriever_test.dart: splits with exact overlap while keeping emoji intact
+00:02 +27: G:\ChatFlow\test\core\rag\retriever_test.dart: skips blank fragments without losing later text
+00:02 +28: G:\ChatFlow\test\core\rag\retriever_test.dart: injects sources after system rules without modifying stored messages
+00:02 +29: G:\ChatFlow\test\core\rag\retriever_test.dart: rejects invalid document and chunk parameters
+00:02 +30: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: restores, switches model, sends, and persists local replies
+00:02 +31: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: ignores blank messages and exposes read-only state
+00:02 +32: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: creates, renames, selects, and deletes sessions
+00:02 +33: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: persists local documents and injects matching context into requests
+00:02 +34: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: does not expose unexpected stream errors in the conversation
+00:02 +35: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: updates and restores runtime model settings
+00:03 +36: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: saves and loads a conversation from shared preferences
+00:03 +37: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: returns an empty conversation when no data exists and clears data
+00:03 +38: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: reports malformed persisted data
+00:03 +39: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: loads and saves multiple sessions
+00:03 +40: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: rejects duplicate persisted session IDs
+00:03 +41: G:\ChatFlow\test\shared\services\local_document_storage_test.dart: saves and loads local documents
+00:03 +42: G:\ChatFlow\test\shared\services\local_document_storage_test.dart: returns empty and rejects malformed data
+00:03 +43: G:\ChatFlow\test\shared\services\local_document_storage_test.dart: rejects duplicate persisted document IDs
+00:03 +44: G:\ChatFlow\test\shared\services\model_config_storage_test.dart: round trips editable model settings without changing endpoints
+00:03 +45: G:\ChatFlow\test\shared\services\model_config_storage_test.dart: ignores unknown models and invalid values
+00:03 +46: G:\ChatFlow\test\shared\services\voice_service_test.dart: falls back cleanly when speech plugins are unavailable
+00:04 +47: G:\ChatFlow\test\widget_test.dart: sends a message and shows the local reply
+00:06 +48: G:\ChatFlow\test\widget_test.dart: switches the selected model
+00:06 +49: G:\ChatFlow\test\widget_test.dart: restores the persisted conversation on startup
+00:07 +50: G:\ChatFlow\test\widget_test.dart: opens the session drawer and creates a new session
+00:07 +51: G:\ChatFlow\test\widget_test.dart: fills a message with a preset prompt
+00:08 +52: G:\ChatFlow\test\widget_test.dart: exposes voice input and speech controls
+00:08 +53: G:\ChatFlow\test\widget_test.dart: opens the model settings surface
+00:09 +54: All tests passed!
+Exit code: 0

@@ -2,6 +2,9 @@
 
 ## 2026-10-11
 
+- 新增模型设置弹层和 `ModelConfigStorage`：支持三模型运行时 API Key、温度、System Prompt 的编辑、持久化与恢复，设置入口覆盖设计稿中的模型配置和系统深色模式说明；新增 4 项自动化测试，全量测试达到 54 项。
+- 模型设置持久化仅保存相对内置默认值的运行时覆盖，避免无操作时把 `--dart-define` 注入的默认 API Key 复制进本地偏好；仍需使用服务端代理或安全存储满足生产安全要求。
+- 模拟验收：`flutter analyze`、`flutter test --reporter expanded`、`flutter build web` 均退出码 0；未运行 Android/OHOS 真实设备或供应商 API 测试，原始输出见 `docs/qa/2026-10-11-model-settings-*`。
 - 完成代码、安全、布局和 HarmonyOS 发布配置审查；修复 Android release INTERNET 权限缺失、SSE 尾事件丢失、LLM 超时/异常信息泄漏、发送中模型状态错配和本地数据无界增长问题。
 - 聊天主页增加系统跟随深色主题、深色气泡/输入栏和新会话空状态；所有新增 UI 颜色继续引用 `design_tokens.dart`。
 - 新增 6 项回归测试，完整测试达到 50 项；`flutter analyze` 和 `flutter build web` 通过。

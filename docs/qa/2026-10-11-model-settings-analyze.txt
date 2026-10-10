@@ -1,0 +1,4 @@
+Flutter assets will be downloaded from https://storage.flutter-io.cn. Make sure you trust this source!
+Analyzing ChatFlow...                                           
+No issues found! (ran in 2.7s)
+Exit code: 0

@@ -5,6 +5,14 @@
 
 ## 2026-10-11
 
+### 任务：模型设置与运行时配置持久化
+
+- **改动文件**：`lib/core/models/llm_config.dart`、`lib/shared/services/model_config_storage.dart`、`lib/features/chat/application/chat_controller.dart`、`lib/main.dart`、`test/shared/services/model_config_storage_test.dart`、`test/features/chat/application/chat_controller_test.dart`、`test/widget_test.dart`、`tasks.md`。
+- **改动**：新增模型设置弹层，支持 DeepSeek-R1、Qwen2.5、Gemini 2.0 Flash 的运行时选择、API Key、温度和 System Prompt；Controller 统一管理配置并把 System Prompt 注入请求；新增偏好存储恢复。持久化只保存相对内置默认值的覆盖项，避免无操作时复制构建时注入的默认 Key。
+- **验证结果**：`dart format` 通过；`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 54 项通过；`flutter build web` 退出码 0，产物目录为 `build/web/`。原始输出见 `docs/qa/2026-10-11-model-settings-*`。未运行 Android/OHOS 设备、真实供应商 API 或人工 UI 测试。
+- **风险**：用户输入的 API Key 仍以 `shared_preferences` 明文保存，生产环境需服务端代理或平台安全存储；设置当前是弹层而非设计稿独立全屏页；三端 L3/L4 继续受既有签名、Gradle 和人工验收门禁限制。
+- **commit**：`e61fa6b`（代码与任务状态）；记录与验证证据随本任务提交。
+
 ### 任务：代码、安全、布局和发布配置全面审查
 
 - **改动文件**：`android/app/src/main/AndroidManifest.xml`、`lib/core/llm/llm_client.dart`、`lib/core/llm/sse_parser.dart`、`lib/features/chat/application/chat_controller.dart`、`lib/main.dart`、`lib/theme/design_tokens.dart`、消息/会话/资料模型与存储、对应测试；审查报告和证据见 `docs/qa/2026-10-11-audit-report.md` 及 `docs/qa/2026-10-11-audit-*`。
