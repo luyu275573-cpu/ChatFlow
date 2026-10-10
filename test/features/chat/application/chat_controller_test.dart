@@ -4,7 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:chatflow/features/chat/application/chat_controller.dart';
+import 'package:chatflow/core/rag/local_document.dart';
+import 'package:chatflow/core/models/message.dart';
 import 'package:chatflow/shared/services/conversation_storage.dart';
+import 'package:chatflow/shared/services/local_document_storage.dart';
 
 void main() {
   test('restores, switches model, sends, and persists local replies', () async {
@@ -76,5 +79,42 @@ void main() {
     expect(controller.state.activeSessionId, 'default');
     await controller.deleteSession(newSessionId);
     expect(controller.state.sessions, hasLength(1));
+  });
+
+  test('persists local documents and injects matching context into requests',
+      () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    List<Message>? request;
+    final controller = ChatController(
+      storage: ConversationStorage(preferences),
+      documentStorage: LocalDocumentStorage(preferences),
+      streamFactory: (_, List<Message> messages) {
+        request = messages;
+        return Stream<String>.value('已使用资料回答');
+      },
+    );
+    addTearDown(controller.dispose);
+
+    await controller.ready;
+    await controller.addDocument(
+      const LocalDocument(
+        id: 'guide',
+        source: 'guide.md',
+        content: 'Dio 支持 SSE 流式请求。',
+      ),
+    );
+    await controller.send('Dio 如何工作？');
+
+    expect(controller.state.documents.single.id, 'guide');
+    expect(request, isNotNull);
+    final Message contextMessage = request!
+        .firstWhere((Message message) => message.role == MessageRole.system);
+    expect(contextMessage.content, contains('guide.md'));
+    expect(controller.state.messages.last.content, '已使用资料回答');
+    expect(
+      (await LocalDocumentStorage(preferences).loadDocuments()).single.id,
+      'guide',
+    );
   });
 }

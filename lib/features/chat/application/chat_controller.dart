@@ -4,15 +4,25 @@ import '../../../core/llm/llm_client.dart';
 import '../../../core/memory/conversation_session.dart';
 import '../../../core/models/llm_config.dart';
 import '../../../core/models/message.dart';
+import '../../../core/rag/local_document.dart';
+import '../../../core/rag/retriever.dart';
 import '../../../shared/services/conversation_storage.dart';
+import '../../../shared/services/local_document_storage.dart';
+
+typedef LlmStreamFactory = Stream<String> Function(
+  LlmConfig config,
+  List<Message> messages,
+);
 
 class ChatState {
   ChatState({
     required Iterable<ConversationSession> sessions,
     required this.activeSessionId,
     required this.selectedModel,
+    Iterable<LocalDocument> documents = const <LocalDocument>[],
     this.isSending = false,
-  }) : sessions = List<ConversationSession>.unmodifiable(sessions);
+  })  : sessions = List<ConversationSession>.unmodifiable(sessions),
+        documents = List<LocalDocument>.unmodifiable(documents);
 
   factory ChatState.initial() {
     final ConversationSession session = ConversationSession(
@@ -38,6 +48,7 @@ class ChatState {
   }
 
   final List<ConversationSession> sessions;
+  final List<LocalDocument> documents;
   final String activeSessionId;
   final String selectedModel;
   final bool isSending;
@@ -53,12 +64,14 @@ class ChatState {
 
   ChatState copyWith({
     Iterable<ConversationSession>? sessions,
+    Iterable<LocalDocument>? documents,
     String? activeSessionId,
     String? selectedModel,
     bool? isSending,
   }) {
     return ChatState(
       sessions: sessions ?? this.sessions,
+      documents: documents ?? this.documents,
       activeSessionId: activeSessionId ?? this.activeSessionId,
       selectedModel: selectedModel ?? this.selectedModel,
       isSending: isSending ?? this.isSending,
@@ -67,8 +80,13 @@ class ChatState {
 }
 
 class ChatController extends StateNotifier<ChatState> {
-  ChatController({ConversationStorage? storage})
-      : _storage = storage,
+  ChatController({
+    ConversationStorage? storage,
+    LocalDocumentStorage? documentStorage,
+    LlmStreamFactory? streamFactory,
+  })  : _storage = storage,
+        _documentStorage = documentStorage,
+        _streamFactory = streamFactory,
         super(ChatState.initial()) {
     _ready = _restore();
   }
@@ -86,6 +104,9 @@ class ChatController extends StateNotifier<ChatState> {
   };
 
   ConversationStorage? _storage;
+  LocalDocumentStorage? _documentStorage;
+  final LlmStreamFactory? _streamFactory;
+  Retriever _retriever = Retriever();
   late final Future<void> _ready;
 
   Future<void> get ready => _ready;
@@ -95,10 +116,20 @@ class ChatController extends StateNotifier<ChatState> {
       final ConversationStorage storage =
           _storage ?? await ConversationStorage.create();
       final List<ConversationSession> sessions = await storage.loadSessions();
+      List<LocalDocument> documents = <LocalDocument>[];
+      try {
+        final LocalDocumentStorage documentStorage =
+            _documentStorage ?? await LocalDocumentStorage.create();
+        documents = await documentStorage.loadDocuments();
+        _documentStorage = documentStorage;
+      } catch (_) {
+        // Keep chat usable when the platform has no local document storage.
+      }
       if (!mounted) {
         return;
       }
       _storage = storage;
+      _setDocuments(documents);
       if (sessions.isNotEmpty) {
         state = state.copyWith(
           sessions: sessions,
@@ -110,6 +141,34 @@ class ChatController extends StateNotifier<ChatState> {
     } catch (_) {
       // Keep the local demo usable when a platform has no storage plugin.
     }
+  }
+
+  Future<void> addDocument(LocalDocument document) async {
+    await _ready;
+    if (!mounted) {
+      return;
+    }
+    final List<LocalDocument> documents = state.documents
+        .where((LocalDocument item) => item.id != document.id)
+        .toList();
+    documents.insert(0, document);
+    _setDocuments(documents);
+    await _persist();
+  }
+
+  Future<void> deleteDocument(String documentId) async {
+    await _ready;
+    if (!mounted) {
+      return;
+    }
+    final List<LocalDocument> documents = state.documents
+        .where((LocalDocument document) => document.id != documentId)
+        .toList();
+    if (documents.length == state.documents.length) {
+      return;
+    }
+    _setDocuments(documents);
+    await _persist();
   }
 
   void selectModel(String model) {
@@ -217,7 +276,7 @@ class ChatController extends StateNotifier<ChatState> {
       return;
     }
 
-    if (config.apiKey.isEmpty) {
+    if (config.apiKey.isEmpty && _streamFactory == null) {
       _replaceMessage(
         assistantIndex,
         Message(
@@ -230,12 +289,15 @@ class ChatController extends StateNotifier<ChatState> {
       return;
     }
 
-    final List<Message> context = List<Message>.from(messages)
-      ..removeAt(assistantIndex);
+    final List<Message> context = _retriever.injectContext(
+      List<Message>.from(messages)..removeAt(assistantIndex),
+      trimmed,
+    );
     final buffer = StringBuffer();
     try {
-      final client = LlmClient(config: config);
-      await for (final String delta in client.chatStream(context)) {
+      final Stream<String> stream = _streamFactory?.call(config, context) ??
+          LlmClient(config: config).chatStream(context);
+      await for (final String delta in stream) {
         if (!mounted) {
           return;
         }
@@ -293,11 +355,17 @@ class ChatController extends StateNotifier<ChatState> {
 
   Future<void> _persist() async {
     final ConversationStorage? storage = _storage;
-    if (storage == null) {
+    final LocalDocumentStorage? documentStorage = _documentStorage;
+    if (storage == null && documentStorage == null) {
       return;
     }
     try {
-      await storage.saveSessions(state.sessions);
+      if (storage != null) {
+        await storage.saveSessions(state.sessions);
+      }
+      if (documentStorage != null) {
+        await documentStorage.saveDocuments(state.documents);
+      }
     } catch (_) {
       // Storage failures must not turn a successful chat request into an error.
     }
@@ -326,6 +394,20 @@ class ChatController extends StateNotifier<ChatState> {
         )
         .toList();
     state = state.copyWith(sessions: sessions);
+  }
+
+  void _setDocuments(Iterable<LocalDocument> documents) {
+    final List<LocalDocument> snapshot = documents.toList();
+    final Retriever retriever = Retriever();
+    for (final LocalDocument document in snapshot) {
+      retriever.addDocument(
+        document.id,
+        document.content,
+        source: document.source,
+      );
+    }
+    _retriever = retriever;
+    state = state.copyWith(documents: snapshot);
   }
 
   String _limitTitle(String title) {

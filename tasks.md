@@ -7,7 +7,7 @@
 
 - [done] 补全持续记录文件和按日期、任务、文件、验证、风险、commit 编排的开发日志。
 - [done] RAG 核心单元：纯 Dart 文档切分、关键词检索、上下文注入接口及单测。
-- [todo] RAG 应用接入：本地文档输入/管理、ChatController 请求注入和 UI 联调。
+- [in_progress] RAG 应用接入：本地文档输入/管理、ChatController 请求注入和 UI 联调。
 
 ## 阶段一：AI 入门
 

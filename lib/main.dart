@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/memory/conversation_session.dart';
 import 'core/models/message.dart';
+import 'core/rag/local_document.dart';
 import 'features/chat/application/chat_controller.dart';
 import 'theme/design_tokens.dart';
 
@@ -170,6 +171,15 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
                       ),
                     ),
                     ListTile(
+                      leading: const Icon(Icons.menu_book_outlined),
+                      title: Text('本地资料 (${chatState.documents.length})'),
+                      subtitle: const Text('用于回答时检索参考'),
+                      onTap: () async {
+                        Navigator.of(context).pop();
+                        await _showDocuments();
+                      },
+                    ),
+                    ListTile(
                       leading: const Icon(
                         Icons.add,
                         color: DesignTokens.primary,
@@ -193,6 +203,154 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
         );
       },
     );
+  }
+
+  Future<void> _showDocuments() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.72,
+          child: Consumer(
+            builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              final ChatState chatState = ref.watch(chatControllerProvider);
+              final ChatController chatController =
+                  ref.read(chatControllerProvider.notifier);
+              return SafeArea(
+                child: Column(
+                  children: <Widget>[
+                    ListTile(
+                      leading: const Icon(Icons.close),
+                      title: const Text('本地资料'),
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: DesignTokens.space3,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '命中资料会作为参考上下文发送给模型',
+                          style: TextStyle(color: DesignTokens.subText),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: chatState.documents.isEmpty
+                          ? const Center(child: Text('还没有本地资料'))
+                          : ListView.builder(
+                              itemCount: chatState.documents.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final LocalDocument document =
+                                    chatState.documents[index];
+                                return ListTile(
+                                  leading:
+                                      const Icon(Icons.description_outlined),
+                                  title: Text(document.source ?? document.id),
+                                  subtitle: Text(
+                                    document.content,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete_outline),
+                                    tooltip: '删除资料',
+                                    onPressed: () => chatController
+                                        .deleteDocument(document.id),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.add,
+                        color: DesignTokens.primary,
+                      ),
+                      title: const Text(
+                        '新增本地资料',
+                        style: TextStyle(color: DesignTokens.primary),
+                      ),
+                      onTap: _addDocument,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _addDocument() async {
+    final TextEditingController idController = TextEditingController();
+    final TextEditingController sourceController = TextEditingController();
+    final TextEditingController contentController = TextEditingController();
+    final ChatController chatController =
+        ref.read(chatControllerProvider.notifier);
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('新增本地资料'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: idController,
+                  decoration: const InputDecoration(labelText: '资料 ID'),
+                ),
+                TextField(
+                  controller: sourceController,
+                  decoration: const InputDecoration(labelText: '来源（可选）'),
+                ),
+                TextField(
+                  controller: contentController,
+                  minLines: 4,
+                  maxLines: 8,
+                  decoration: const InputDecoration(labelText: '资料内容'),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final String id = idController.text.trim();
+                final String content = contentController.text.trim();
+                if (id.isEmpty || content.isEmpty) {
+                  return;
+                }
+                await chatController.addDocument(
+                  LocalDocument(
+                    id: id,
+                    content: content,
+                    source: sourceController.text.trim().isEmpty
+                        ? null
+                        : sourceController.text.trim(),
+                  ),
+                );
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              child: const Text('保存'),
+            ),
+          ],
+        );
+      },
+    );
+    idController.dispose();
+    sourceController.dispose();
+    contentController.dispose();
   }
 
   Future<void> _renameSession(ConversationSession session) async {
