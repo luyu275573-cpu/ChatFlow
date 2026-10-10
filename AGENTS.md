@@ -37,19 +37,20 @@ lib/
 
 ## 5. 功能需求 + 验收清单（分阶段）
 ### 阶段一（AI 入门）
-- [ ] 多模型接入（DeepSeek-R1/Qwen2.5/Gemini 2.0 Flash），可配置切换
-- [ ] 单轮对话 + 会话管理 + 本地持久化
+- [x] 多模型接入（DeepSeek-R1/Qwen2.5/Gemini 2.0 Flash），可配置切换
+- [x] 单轮对话 + 会话管理 + 本地持久化
 ### 阶段二（流式）
-- [ ] SSE 流式逐字渲染 + Markdown 展示
-- [ ] 多会话 + 上下文管理
+- [x] SSE 流式逐字渲染 + Markdown 展示
+- [x] 多会话 + 上下文管理
 ### 阶段三（进阶）
 - [ ] 语音输入/播报
 - [ ] RAG 雏形（本地文档片段检索注入）
 
 ### 通用验收
 - [ ] 三端（Android/Web/Ohos）都能 `flutter run` 跑通
-- [ ] core/ 单元测试覆盖 SSE 解析 + 会话管理
-- [ ] API Key 走配置/环境变量，不硬编码
+- [x] core/ 单元测试覆盖 SSE 解析 + 会话管理
+- [x] API Key 走配置/环境变量，不硬编码
+- [ ] Android/Web/OHOS 三端真实设备运行；当前 Web 已构建通过，Android/OHOS 受环境阻塞
 
 ## 6. 设计 Token（UI 必须引用，禁止硬编码色值）
 见 `lib/theme/design_tokens.dart`。关键值：主色 `#6366F1`、流式绿 `#22C55E`、
@@ -76,7 +77,8 @@ flutter build apk --debug
 ## 9. 验收门禁
 L1 `flutter analyze` 零错误 → L2 `flutter test` 通过 → L3 三端 run 通核心链路（截图）→ L4 人工 review。
 
-## 10. 当前进度与第一步
-- 当前：`flutter create` 已生成 android/ohos/web + lib/main.dart（默认计数器 demo）。
-- 第一步：① 建立 `lib/theme/design_tokens.dart` 与 `core/` 目录；② 重写 main.dart 为对话主页骨架（顶部模型切换 + 气泡列表 + 底部输入栏），对照 docs/design.html 第一屏；先用本地假对话数据，暂不接真实模型。
+## 10. 当前进度与下一步
+- 已完成：对话主页、多模型配置、SSE 流式、Markdown、多会话、Riverpod 和本地持久化。
+- 当前：阶段三 RAG 雏形开发中；任务状态和验证证据见 `tasks.md` 与 `docs/development-log.md`。
+- 下一步：实现纯 Dart 文档切分与关键词检索，保持 `core/` 不依赖 Flutter UI。
 - 每完成一个可验证单元就 git 提交。
