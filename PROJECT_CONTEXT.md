@@ -30,13 +30,14 @@ lib/
 - 三模型配置切换和可选真实 SSE 对话。
 - SSE 增量渲染与助手 Markdown 展示。
 - 多会话创建、选择、重命名、删除和本地持久化。
-- Riverpod Controller 与 34 项自动化测试。
-- `core/rag/retriever.dart`：纯 Dart 文档切分、关键词检索和上下文注入接口，尚未接入聊天发送流程。
+- Riverpod Controller 与 39 项自动化测试。
+- `core/rag/retriever.dart`：纯 Dart 文档切分、关键词检索和上下文注入；本地资料通过 `LocalDocumentStorage` 持久化，并已接入真实流式聊天请求。
+- 会话抽屉提供本地资料新增、删除和列表入口。
 
 ## 下一步与已知限制
 
-- RAG：本地文档输入/管理、聊天请求注入和 UI 联调待做。
-- 检索以英文单词、数字和中文单字匹配，适合小规模本地文本；没有向量语义检索、文件格式解析和文档持久化。
+- RAG：已完成本地资料管理、持久化、请求注入和抽屉入口；仍是关键词检索，不包含文件格式解析或向量语义检索。
+- 检索以英文单词、数字和中文单字匹配，适合小规模本地文本。
 - 三模型兼容请求已用模拟响应测试，尚未记录实际供应商请求成功的证据。
 - 模型设置完整页面、Prompt 模板、语音输入/播报、深色主题和设计稿中的文生图页面未实现。
 
@@ -59,7 +60,7 @@ flutter run -d <ohos-device>
 3. L3：Android、Web、OHOS 核心链路运行并留存证据。
 4. L4：对照 `docs/design.html` 人工 review。
 
-当前 Web 已通过构建；Android 受 Gradle loopback 错误阻塞；OHOS 因 `hdc list targets` 无设备阻塞。`shared_preferences` 当前版本没有 OHOS 实现，鸿蒙端持久化也需要补齐。三端 L3 和设计逐屏 L4 均未完成。
+当前 Web 已通过构建；Android 模拟器已发现但受 Gradle loopback 错误阻塞；OHOS 模拟器已发现但 HAP 受 DevEco 调试签名配置阻塞。`shared_preferences` 当前版本没有 OHOS 实现，鸿蒙端持久化仍需专用适配或降级策略。三端 L3 和设计逐屏 L4 均未完成。
 
 ## 持续记录
 

@@ -7,7 +7,7 @@
 
 - [done] 补全持续记录文件和按日期、任务、文件、验证、风险、commit 编排的开发日志。
 - [done] RAG 核心单元：纯 Dart 文档切分、关键词检索、上下文注入接口及单测。
-- [in_progress] RAG 应用接入：本地文档输入/管理、ChatController 请求注入和 UI 联调。
+- [done] RAG 应用接入：本地文档输入/管理、ChatController 请求注入和 UI 联调。
 
 ## 阶段一：AI 入门
 
@@ -29,17 +29,17 @@
 ## 阶段三：进阶能力
 
 - [done] RAG 核心：文档片段检索及生成请求上下文的纯 Dart 接口。
-- [todo] RAG 接入聊天发送流程和本地文档管理；阶段三整体尚未完成。
+- [done] RAG 接入聊天发送流程和本地文档管理；发送请求会注入命中资料上下文。
 - [todo] 语音输入（`speech_to_text`）。
 - [todo] 语音播报（`flutter_tts`）。
 
 ## 验收门禁
 
 - [done] L1：`flutter analyze` 零错误。
-- [done] L2：核心层、Controller、存储和 Widget 共 34 项测试通过（2026-10-10）。
+- [done] L2：核心层、Controller、存储和 Widget 共 39 项测试通过（2026-10-10）。
 - [done] Web：`flutter build web` 通过。
-- [blocked] Android：模拟器曾连接，但 Gradle daemon 报 `Unable to establish loopback connection`；恢复条件：解决本机 Java/Gradle 回环连接，并重新连接设备运行。
-- [blocked] OHOS：`hdc list targets` 返回 `[Empty]`；恢复条件：启动兼容模拟器或连接真机，补齐 OHOS 存储适配并执行运行验收。
+- [blocked] Android：模拟器已发现，但 Gradle 报 `Unable to establish loopback connection`；恢复条件：解决本机 Java/Gradle 回环连接后重新运行 `flutter run -d emulator-5554`。
+- [blocked] OHOS：模拟器已发现，但 HAP 因未配置 DevEco 调试签名而未生成；恢复条件：在 DevEco Studio 的 Signing Configs 勾选 Automatically generate signature 后重新运行 `flutter run -d 127.0.0.1:5557`。
 - [todo] 三端真实设备核心链路和截图验证。
 - [todo] L4 人工 UI 逐屏复核。
 

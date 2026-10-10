@@ -4,8 +4,9 @@
 
 - 建立 `tasks.md`、`changes.md`、`PROJECT_CONTEXT.md`、`docs/development-log.md`，回填历史提交和验证范围；基线提交 `686f7a8`。
 - 新增 `lib/core/rag/retriever.dart`：支持 Unicode 安全分块、重叠、英文词/中文单字匹配、排序/限量及保留系统消息的请求上下文注入。
+- 新增本地资料模型与 `shared_preferences` 存储；会话抽屉支持资料新增、删除、列表，发送真实流式请求前自动注入命中资料上下文。
 - 新增 8 项 RAG 测试，全量测试达到 34 项；静态分析和 Web 构建通过，证据保存在 `docs/qa/`。
-- RAG 当前仅完成核心接口，文档输入/管理和聊天请求接入待做；未新增依赖。代码、持续记录补全和验证证据提交：`f1ab2a2`。
+- RAG 应用接入新增 5 项测试，全量测试达到 39 项；未新增依赖。Android 仍受 Gradle loopback 阻塞，OHOS 需要 DevEco 调试签名。代码提交：`6f2823d`。
 - 建立纯 Dart `core/` 层：消息模型、LLM 配置、SSE 解析器和 LLM 客户端。
 - 建立聊天主页：模型切换、消息气泡、输入栏和无 API Key 时的本地演示回复。
 - 增加真实 OpenAI 兼容 SSE 流式请求，API Key 通过 `String.fromEnvironment` 读取。
@@ -14,7 +15,7 @@
 - 增加 Markdown 回复渲染。
 - 增加多会话创建、切换、重命名、删除和会话抽屉。
 - 增加 26 项核心、服务、Controller 和 Widget 测试。
-- Web 构建通过；Android Gradle loopback 和 OHOS 无设备属于环境阻塞。
+- Web 构建通过；Android Gradle loopback 和 OHOS 调试签名属于环境阻塞。
 
 ## 2026-10-09
 
