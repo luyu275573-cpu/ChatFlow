@@ -1,6 +1,7 @@
 # ChatFlow 开发日志
 
-> 本文件按日期追加。每条记录只写已发生的任务、文件、验证证据、风险和 commit；计划使用 `tasks.md` 管理。
+> 本文件按日期追加，日期使用 Asia/Shanghai。每条记录包含任务、改动文件、验证结果、风险和 commit；计划使用 `tasks.md` 管理。
+> 历史基线根据 Git 历史和本会话实际执行结果回填；未保留的早期原始日志不补造。提交前标注“随本任务提交”，提交后在后续记录提交中补入实际 SHA。
 
 ## 2026-10-10
 
@@ -44,18 +45,74 @@
 - **风险**：Android 当前构建遇到 `java.io.IOException: Unable to establish loopback connection`；OHOS `hdc list targets` 返回 `[Empty]`，没有完成三端运行验收。
 - **commit**：`f374227`。
 
+### 历史提交逐项索引
+
+下表拆开上述任务组中的每次提交，文件列表依据 `git log --name-only`。验证栏为已留存的会话记录范围；不代表真实供应商、设备或视觉验收通过。
+
+| 日期 | 任务 | 改动文件 | 验证结果 | 风险/未完成 | commit |
+| --- | --- | --- | --- | --- | --- |
+| 2026-10-10 | 对话主页骨架 | `lib/core/models/message.dart`、`lib/main.dart`、`lib/theme/design_tokens.dart`、`test/widget_test.dart` | 见对话主页任务组；未保留早期独立原始日志 | 本地演示、设计逐屏待验收 | `23221e6` |
+| 2026-10-10 | 三模型配置 | `lib/core/models/llm_config.dart`、`test/core/models/message_test.dart` | 模型配置单测；未保留独立原始日志 | 三供应商实际请求待验证 | `a9bc52c` |
+| 2026-10-10 | SSE 解析 | `lib/core/llm/sse_parser.dart`、`test/core/llm/sse_parser_test.dart` | 分块解析单测；未保留独立原始日志 | 设备网络行为待验证 | `40d99f6` |
+| 2026-10-10 | LLM 客户端 | `lib/core/llm/llm_client.dart`、`pubspec.yaml`、`pubspec.lock`、`test/core/llm/llm_client_test.dart` | 模拟响应客户端单测；未保留独立原始日志 | 实际 Key 和 CORS 待验证 | `acb1d76` |
+| 2026-10-10 | 主页真实流式调用接口 | `lib/main.dart` | 分析、11 项测试和 Web 构建通过（会话记录） | 真实模型回复无运行证据 | `de3bd0d` |
+| 2026-10-10 | 会话内存序列化 | `lib/core/models/message.dart`、`lib/core/memory/conversation_memory.dart`、`test/core/memory/conversation_memory_test.dart` | 分析、15 项测试和 Web 构建通过（会话记录） | 尚未接入存储 | `88409e9` |
+| 2026-10-10 | 本地存储适配 | `lib/shared/services/conversation_storage.dart`、`pubspec.yaml`、`pubspec.lock`、`test/shared/services/conversation_storage_test.dart` | 分析和 18 项测试通过（会话记录） | OHOS 插件实现缺失 | `67d905e` |
+| 2026-10-10 | 主页恢复和保存 | `lib/main.dart`、`test/widget_test.dart` | 分析、19 项测试和 Web 构建通过（会话记录） | 存储错误当前降级为本地演示 | `f976293` |
+| 2026-10-10 | Riverpod Controller | `lib/features/chat/application/chat_controller.dart`、`lib/main.dart`、`pubspec.yaml`、`pubspec.lock`、`test/features/chat/application/chat_controller_test.dart` | 分析、21 项测试和 Web 构建通过（会话记录） | 三端运行待验证 | `1ba75fd` |
+| 2026-10-10 | 助手 Markdown | `lib/main.dart`、`pubspec.yaml`、`pubspec.lock`、`test/widget_test.dart` | 分析、21 项测试和 Web 构建通过（会话记录） | 当前依赖版本已标记 discontinued | `f1ed3bd` |
+| 2026-10-10 | 多会话管理 | `lib/core/memory/conversation_session.dart`、`lib/features/chat/application/chat_controller.dart`、`lib/shared/services/conversation_storage.dart`、`lib/main.dart` 及对应四份测试 | 分析、26 项测试和 Web 构建通过（会话记录） | Android/OHOS 运行阻塞 | `f374227` |
+
+### 任务：建立持续开发记录
+
+- **改动文件**：`AGENTS.md`、`PROJECT_CONTEXT.md`、`changes.md`、`tasks.md`、`docs/development-log.md`。
+- **改动**：记录已实现功能、历史提交、开发命令、验收范围和阻塞项，修正过时的“默认计数器”进度描述。
+- **验证结果**：对照 `git log --reverse --date=short` 和会话验证结果回填；`git diff --cached --check` 通过；基线已推送。
+- **风险**：早期任务没有独立保存原始日志，已明确证据范围；自动化测试通过不代表设备、真实 API 或设计验收完成。
+- **commit**：`686f7a8`。
+
+### 任务：RAG 核心检索与上下文注入接口
+
+- **改动文件**：`lib/core/rag/retriever.dart`、`test/core/rag/retriever_test.dart`；同步 `AGENTS.md`、`README.md`、`PROJECT_CONTEXT.md`、`changes.md`、`tasks.md`、本日志和 `docs/qa/` 验证证据。
+- **改动**：增加本地文本 Unicode 分块和重叠、英文词/中文单字匹配、分数排序和数量限制；将带来源的参考资料插入原有 system 消息之后，不修改会话历史。保持纯 Dart，未新增依赖。
+- **验证结果**：格式化通过；`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 34 项通过（RAG 8 项）；`flutter build web` 退出码 0。原始输出见 [验证索引](qa/README.md)。
+- **风险**：关键词扫描适合小文本集合，无语义向量检索；英文词可能被固定长度分块截断。尚未接入 ChatController 和文档管理 UI，没有真实网络或设备运行证据。Android/OHOS 历史阻塞未在本任务复检。
+- **commit**：随本任务提交（`feat: 增加纯 Dart RAG 检索核心`），提交后回填 SHA。
+
 ## 2026-10-09
 
 ### 任务：工程初始化和规范建立
 
 - **改动文件**：工程骨架、`AGENTS.md`、`docs/design.html`、设计 Token、提示模板和基础配置。
+- **改动**：初始化 Android/OHOS/Web 目录，写入项目技术约束、开发/设计文档和提示模板。
 - **验证结果**：工程初始化提交完成。
 - **风险**：当时仍为默认计数器骨架，后续需要按设计文档逐步替换。
 - **commit**：`d587f63`、`ce297e4`。
 
+| 日期 | 任务 | 改动文件 | 验证结果 | 风险 | commit |
+| --- | --- | --- | --- | --- | --- |
+| 2026-10-09 | 工程与设计规范初始化 | Android/OHOS/Web 骨架、`lib/main.dart`、`lib/theme/design_tokens.dart`、`AGENTS.md`、`docs/`、`pubspec.yaml`、`pubspec.lock` 等 | 已核对 Git 提交；没有保存当时的原始构建输出 | 尚为计数器骨架 | `d587f63` |
+| 2026-10-09 | 首个任务提示模板 | `prompts/首个任务.md` | 已核对 Git 改动；提交说明称构建验证通过，原始日志未保留 | 不能据提交标题认定三端运行已通过 | `ce297e4` |
+
 ## 当前未完成项
 
-- 阶段三语音输入、语音播报和 RAG 雏形。
+- 阶段三语音输入、语音播报；RAG 核心完成，文档管理和聊天发送接入待做。
 - Prompt 模板。
+- 模型设置完整页面、深色主题和设计稿中的文生图页面。
 - Android、OHOS 真实设备运行和截图证据。
+- 三模型实际 API Key 请求及 Web CORS 验证。
 - 发布签名、隐私政策及应用市场上架检查。
+
+## 后续记录模板
+
+每个任务在对应日期下追加，提交后补齐实际 SHA。纯文档任务执行差异、链接和状态一致性检查；代码任务按改动执行格式化、分析和测试；涉及界面的任务还需运行截图。
+
+```markdown
+### 任务：<可验证单元名称>
+
+- **改动文件**：<仓库相对路径>
+- **改动**：<最终行为及原因>
+- **验证结果**：<命令、退出码、数量和证据路径；未执行的验证明确注明>
+- **风险**：<限制、未完成项、阻塞恢复条件>
+- **commit**：<实际 SHA；提交前使用“随本任务提交”>
+```

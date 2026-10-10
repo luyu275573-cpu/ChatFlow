@@ -17,8 +17,9 @@ ChatFlow 是一个 Flutter 跨端 AI 助手，按“云端模型 → SSE 流式 
 lib/
 ├── core/                         # 纯 Dart，禁止 Flutter UI import
 │   ├── llm/                      # LLM 客户端和 SSE 解析
-│   ├── memory/                   # 消息、会话和会话内存
-│   └── models/                   # Message、LlmConfig
+│   ├── memory/                   # 会话实体和会话内存
+│   ├── models/                   # Message、LlmConfig
+│   └── rag/                      # 本地文档切分、检索和上下文注入接口
 ├── features/chat/application/    # Riverpod ChatController
 ├── shared/services/              # 平台存储等适配
 └── theme/design_tokens.dart      # UI 颜色、字号、圆角和间距
@@ -29,7 +30,15 @@ lib/
 - 三模型配置切换和可选真实 SSE 对话。
 - SSE 增量渲染与助手 Markdown 展示。
 - 多会话创建、选择、重命名、删除和本地持久化。
-- Riverpod Controller 与 26 项自动化测试。
+- Riverpod Controller 与 34 项自动化测试。
+- `core/rag/retriever.dart`：纯 Dart 文档切分、关键词检索和上下文注入接口，尚未接入聊天发送流程。
+
+## 下一步与已知限制
+
+- RAG：本地文档输入/管理、聊天请求注入和 UI 联调待做。
+- 检索以英文单词、数字和中文单字匹配，适合小规模本地文本；没有向量语义检索、文件格式解析和文档持久化。
+- 三模型兼容请求已用模拟响应测试，尚未记录实际供应商请求成功的证据。
+- 模型设置完整页面、Prompt 模板、语音输入/播报、深色主题和设计稿中的文生图页面未实现。
 
 ## 开发命令
 
@@ -50,11 +59,13 @@ flutter run -d <ohos-device>
 3. L3：Android、Web、OHOS 核心链路运行并留存证据。
 4. L4：对照 `docs/design.html` 人工 review。
 
-当前 Web 已通过构建；Android 受 Gradle loopback 错误阻塞；OHOS 因 `hdc list targets` 无设备阻塞。不要把环境阻塞写成代码完成。
+当前 Web 已通过构建；Android 受 Gradle loopback 错误阻塞；OHOS 因 `hdc list targets` 无设备阻塞。`shared_preferences` 当前版本没有 OHOS 实现，鸿蒙端持久化也需要补齐。三端 L3 和设计逐屏 L4 均未完成。
 
 ## 持续记录
 
 - 变更摘要：[changes.md](changes.md)
 - 当前任务：[tasks.md](tasks.md)
 - 日期化开发日志：[docs/development-log.md](docs/development-log.md)
+- 验证证据索引：[docs/qa/README.md](docs/qa/README.md)
 - 每个可验证单元单独 commit，并在开发日志中记录验证命令、结果和风险。
+- 约束以 `AGENTS.md` 为准；本文件提供当前实现上下文，不替代技术栈和设计规范。

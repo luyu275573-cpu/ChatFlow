@@ -20,6 +20,9 @@
 | `docs/design.html` | UI 设计图（风格/配色/功能/5 屏）——**设计真源** |
 | `docs/development-doc.md` | 详细开发文档 |
 | `docs/agent-spec.md` | 智能体开发约束与规范 |
+| `PROJECT_CONTEXT.md` | 当前实现、目录职责和已知限制 |
+| `tasks.md` | 任务状态和阻塞恢复条件 |
+| `docs/development-log.md` | 按日期记录改动、验证、风险和 commit |
 
 ## 4. 架构要求（重点：AI 核心层与 UI 解耦）
 ```
@@ -50,7 +53,8 @@ lib/
 - [ ] 三端（Android/Web/Ohos）都能 `flutter run` 跑通
 - [x] core/ 单元测试覆盖 SSE 解析 + 会话管理
 - [x] API Key 走配置/环境变量，不硬编码
-- [ ] Android/Web/OHOS 三端真实设备运行；当前 Web 已构建通过，Android/OHOS 受环境阻塞
+
+> 上述功能勾选代表实现和自动测试完成；真实供应商请求、三端运行及设计逐屏人工验收仍待完成。Web 已构建通过，Android/OHOS 受环境阻塞。
 
 ## 6. 设计 Token（UI 必须引用，禁止硬编码色值）
 见 `lib/theme/design_tokens.dart`。关键值：主色 `#6366F1`、流式绿 `#22C55E`、
@@ -79,6 +83,7 @@ L1 `flutter analyze` 零错误 → L2 `flutter test` 通过 → L3 三端 run �
 
 ## 10. 当前进度与下一步
 - 已完成：对话主页、多模型配置、SSE 流式、Markdown、多会话、Riverpod 和本地持久化。
-- 当前：阶段三 RAG 雏形开发中；任务状态和验证证据见 `tasks.md` 与 `docs/development-log.md`。
-- 下一步：实现纯 Dart 文档切分与关键词检索，保持 `core/` 不依赖 Flutter UI。
+- 当前：阶段三 RAG 核心接口已完成，文档切分、关键词检索及上下文注入通过单测；尚未接入聊天流程。
+- 下一步：本地文档管理和 RAG 请求接入；任务状态和验证证据见 `tasks.md` 与 `docs/development-log.md`。
 - 每完成一个可验证单元就 git 提交。
+- 每个任务开始前更新 `tasks.md`；验证后同步 `changes.md`、`PROJECT_CONTEXT.md` 与 `docs/development-log.md`，记录真实结果和 commit。
