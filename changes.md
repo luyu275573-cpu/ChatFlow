@@ -7,6 +7,7 @@
 - 新增本地资料模型与 `shared_preferences` 存储；会话抽屉支持资料新增、删除、列表，发送真实流式请求前自动注入命中资料上下文。
 - 新增 8 项 RAG 测试，全量测试达到 34 项；静态分析和 Web 构建通过，证据保存在 `docs/qa/`。
 - RAG 应用接入新增 5 项测试，全量测试达到 39 项；未新增依赖。Android 仍受 Gradle loopback 阻塞，OHOS 需要 DevEco 调试签名。代码提交：`6f2823d`。
+- 新增纯 Dart `PromptTemplate` 和翻译/总结/代码审查三项预设；输入栏增加 Prompt 选择入口，全量测试达到 42 项，Web 构建通过。代码提交：`1467b52`。
 - 建立纯 Dart `core/` 层：消息模型、LLM 配置、SSE 解析器和 LLM 客户端。
 - 建立聊天主页：模型切换、消息气泡、输入栏和无 API Key 时的本地演示回复。
 - 增加真实 OpenAI 兼容 SSE 流式请求，API Key 通过 `String.fromEnvironment` 读取。

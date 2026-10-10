@@ -5,6 +5,14 @@
 
 ## 2026-10-10
 
+### 任务：预设 Prompt 模板
+
+- **改动文件**：`lib/core/models/prompt_template.dart`、`lib/main.dart`、`test/core/models/prompt_template_test.dart`、`test/widget_test.dart`、`tasks.md`。
+- **改动**：增加翻译、总结、代码审查三项纯 Dart Prompt 模板；输入栏新增选择入口，选中后将指令填入输入框供用户继续编辑或直接发送。
+- **验证结果**：`flutter analyze` 退出码 0；`flutter test --reporter expanded` 退出码 0，共 42 项通过；`flutter build web` 退出码 0。原始输出见 [验证索引](qa/README.md)。
+- **风险**：模板当前只提供固定中文指令，没有用户自定义模板和持久化；Android Gradle loopback 与 OHOS 调试签名阻塞仍未解决。
+- **commit**：`1467b52`。
+
 ### 任务：RAG 应用接入与本地资料管理
 
 - **改动文件**：`lib/core/rag/local_document.dart`、`lib/shared/services/local_document_storage.dart`、`lib/features/chat/application/chat_controller.dart`、`lib/main.dart`、对应测试、`tasks.md`。

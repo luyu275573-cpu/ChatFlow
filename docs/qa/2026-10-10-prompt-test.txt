@@ -1,0 +1,45 @@
+Waiting for another flutter command to release the startup lock...
+Flutter assets will be downloaded from https://storage.flutter-io.cn. Make sure you trust this source!
+00:00 +0: G:\ChatFlow\test\core\llm\llm_client_test.dart: sends an OpenAI-compatible non-stream request
+00:00 +1: G:\ChatFlow\test\core\llm\llm_client_test.dart: yields content deltas from an SSE response
+00:00 +2: G:\ChatFlow\test\core\llm\sse_parser_test.dart: parses multiple complete events from one chunk
+00:00 +3: G:\ChatFlow\test\core\llm\sse_parser_test.dart: keeps a partial line until the next chunk
+00:00 +4: G:\ChatFlow\test\core\llm\sse_parser_test.dart: joins multiline data and ignores metadata
+00:00 +5: G:\ChatFlow\test\core\llm\sse_parser_test.dart: can reset an in-progress event
+00:00 +6: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: round-trips messages through JSON
+00:00 +7: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: supports replacing, appending, reading, and clearing messages
+00:00 +8: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: returns a read-only message snapshot
+00:00 +9: G:\ChatFlow\test\core\memory\conversation_memory_test.dart: rejects malformed persisted messages
+00:01 +10: G:\ChatFlow\test\core\memory\conversation_session_test.dart: round-trips a named conversation
+00:01 +11: G:\ChatFlow\test\core\memory\conversation_session_test.dart: rejects malformed sessions
+00:01 +12: G:\ChatFlow\test\core\models\message_test.dart: serializes message roles in the OpenAI shape
+00:01 +13: G:\ChatFlow\test\core\models\message_test.dart: provides the three configured model presets
+00:01 +14: G:\ChatFlow\test\core\models\message_test.dart: copies runtime settings without changing the preset
+00:02 +15: G:\ChatFlow\test\core\models\prompt_template_test.dart: provides the three requested prompt templates
+00:02 +16: G:\ChatFlow\test\core\models\prompt_template_test.dart: applies an instruction without changing the input content
+00:02 +17: G:\ChatFlow\test\core\rag\local_document_test.dart: serializes and restores a local document
+00:02 +18: G:\ChatFlow\test\core\rag\local_document_test.dart: rejects empty document fields
+00:03 +19: G:\ChatFlow\test\core\rag\retriever_test.dart: retrieves the most relevant Chinese and English chunks
+00:03 +20: G:\ChatFlow\test\core\rag\retriever_test.dart: splits documents and builds an injectable context
+00:03 +21: G:\ChatFlow\test\core\rag\retriever_test.dart: returns no results for empty or unrelated queries
+00:03 +22: G:\ChatFlow\test\core\rag\retriever_test.dart: ranks by matched terms and returns only the requested number
+00:03 +23: G:\ChatFlow\test\core\rag\retriever_test.dart: splits with exact overlap while keeping emoji intact
+00:03 +24: G:\ChatFlow\test\core\rag\retriever_test.dart: skips blank fragments without losing later text
+00:03 +25: G:\ChatFlow\test\core\rag\retriever_test.dart: injects sources after system rules without modifying stored messages
+00:03 +26: G:\ChatFlow\test\core\rag\retriever_test.dart: rejects invalid document and chunk parameters
+00:03 +27: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: restores, switches model, sends, and persists local replies
+00:03 +28: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: ignores blank messages and exposes read-only state
+00:03 +29: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: creates, renames, selects, and deletes sessions
+00:03 +30: G:\ChatFlow\test\features\chat\application\chat_controller_test.dart: persists local documents and injects matching context into requests
+00:04 +31: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: saves and loads a conversation from shared preferences
+00:04 +32: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: returns an empty conversation when no data exists and clears data
+00:04 +33: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: reports malformed persisted data
+00:04 +34: G:\ChatFlow\test\shared\services\conversation_storage_test.dart: loads and saves multiple sessions
+00:04 +35: G:\ChatFlow\test\shared\services\local_document_storage_test.dart: saves and loads local documents
+00:04 +36: G:\ChatFlow\test\shared\services\local_document_storage_test.dart: returns empty and rejects malformed data
+00:04 +37: G:\ChatFlow\test\widget_test.dart: sends a message and shows the local reply
+00:06 +38: G:\ChatFlow\test\widget_test.dart: switches the selected model
+00:07 +39: G:\ChatFlow\test\widget_test.dart: restores the persisted conversation on startup
+00:07 +40: G:\ChatFlow\test\widget_test.dart: opens the session drawer and creates a new session
+00:08 +41: G:\ChatFlow\test\widget_test.dart: fills a message with a preset prompt
+00:08 +42: All tests passed!

@@ -84,6 +84,6 @@ L1 `flutter analyze` 零错误 → L2 `flutter test` 通过 → L3 三端 run �
 ## 10. 当前进度与下一步
 - 已完成：对话主页、多模型配置、SSE 流式、Markdown、多会话、Riverpod 和本地持久化。
 - 当前：阶段三 RAG 已完成本地资料模型、持久化、抽屉管理和聊天请求上下文注入；关键词检索及 Controller 接入通过单测。
-- 下一步：语音输入/播报、Prompt 模板和三端真实运行验收；任务状态和验证证据见 `tasks.md` 与 `docs/development-log.md`。
+- 下一步：语音输入/播报和三端真实运行验收；任务状态和验证证据见 `tasks.md` 与 `docs/development-log.md`。
 - 每完成一个可验证单元就 git 提交。
 - 每个任务开始前更新 `tasks.md`；验证后同步 `changes.md`、`PROJECT_CONTEXT.md` 与 `docs/development-log.md`，记录真实结果和 commit。
