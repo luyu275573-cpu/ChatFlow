@@ -121,4 +121,22 @@ void main() {
     expect(find.byTooltip('语音输入'), findsOneWidget);
     expect(find.byTooltip('语音播报'), findsOneWidget);
   });
+
+  testWidgets('opens the model settings surface', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('模型设置'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('模型设置'), findsOneWidget);
+    expect(find.text('温度'), findsOneWidget);
+    expect(find.text('API Key'), findsOneWidget);
+    expect(find.text('System Prompt'), findsOneWidget);
+    expect(find.text('跟随系统'), findsOneWidget);
+
+    await tester.tap(find.text('保存设置'));
+    await tester.pumpAndSettle();
+    expect(find.text('模型设置'), findsNothing);
+  });
 }

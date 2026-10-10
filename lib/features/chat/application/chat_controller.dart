@@ -8,6 +8,7 @@ import '../../../core/rag/local_document.dart';
 import '../../../core/rag/retriever.dart';
 import '../../../shared/services/conversation_storage.dart';
 import '../../../shared/services/local_document_storage.dart';
+import '../../../shared/services/model_config_storage.dart';
 
 typedef LlmStreamFactory = Stream<String> Function(
   LlmConfig config,
@@ -19,9 +20,11 @@ class ChatState {
     required Iterable<ConversationSession> sessions,
     required this.activeSessionId,
     required this.selectedModel,
+    required Map<String, LlmConfig> configs,
     Iterable<LocalDocument> documents = const <LocalDocument>[],
     this.isSending = false,
   })  : sessions = List<ConversationSession>.unmodifiable(sessions),
+        configs = Map<String, LlmConfig>.unmodifiable(configs),
         documents = List<LocalDocument>.unmodifiable(documents);
 
   factory ChatState.initial() {
@@ -44,6 +47,7 @@ class ChatState {
       sessions: <ConversationSession>[session],
       activeSessionId: session.id,
       selectedModel: ChatController.models.first,
+      configs: ChatController.modelConfigs,
     );
   }
 
@@ -51,7 +55,11 @@ class ChatState {
   final List<LocalDocument> documents;
   final String activeSessionId;
   final String selectedModel;
+  final Map<String, LlmConfig> configs;
   final bool isSending;
+
+  LlmConfig get selectedConfig =>
+      configs[selectedModel] ?? ChatController.modelConfigs[selectedModel]!;
 
   List<Message> get messages {
     for (final ConversationSession session in sessions) {
@@ -67,6 +75,7 @@ class ChatState {
     Iterable<LocalDocument>? documents,
     String? activeSessionId,
     String? selectedModel,
+    Map<String, LlmConfig>? configs,
     bool? isSending,
   }) {
     return ChatState(
@@ -74,6 +83,7 @@ class ChatState {
       documents: documents ?? this.documents,
       activeSessionId: activeSessionId ?? this.activeSessionId,
       selectedModel: selectedModel ?? this.selectedModel,
+      configs: configs ?? this.configs,
       isSending: isSending ?? this.isSending,
     );
   }
@@ -83,9 +93,11 @@ class ChatController extends StateNotifier<ChatState> {
   ChatController({
     ConversationStorage? storage,
     LocalDocumentStorage? documentStorage,
+    ModelConfigStorage? configStorage,
     LlmStreamFactory? streamFactory,
   })  : _storage = storage,
         _documentStorage = documentStorage,
+        _configStorage = configStorage,
         _streamFactory = streamFactory,
         super(ChatState.initial()) {
     _ready = _restore();
@@ -108,17 +120,33 @@ class ChatController extends StateNotifier<ChatState> {
 
   ConversationStorage? _storage;
   LocalDocumentStorage? _documentStorage;
+  ModelConfigStorage? _configStorage;
   final LlmStreamFactory? _streamFactory;
   Retriever _retriever = Retriever();
   late final Future<void> _ready;
 
   Future<void> get ready => _ready;
 
+  ChatState get snapshot => state;
+
   Future<void> _restore() async {
     try {
       final ConversationStorage storage =
           _storage ?? await ConversationStorage.create();
       final List<ConversationSession> sessions = await storage.loadSessions();
+      String? selectedModel;
+      Map<String, LlmConfig>? configs;
+      try {
+        final ModelConfigStorage configStorage =
+            _configStorage ?? await ModelConfigStorage.create();
+        final StoredModelSettings? settings =
+            await configStorage.load(modelConfigs);
+        _configStorage = configStorage;
+        selectedModel = settings?.selectedModel;
+        configs = settings?.configs;
+      } catch (_) {
+        // Keep the built-in presets when settings are unavailable or corrupt.
+      }
       List<LocalDocument> documents = <LocalDocument>[];
       try {
         final LocalDocumentStorage documentStorage =
@@ -137,8 +165,14 @@ class ChatController extends StateNotifier<ChatState> {
         state = state.copyWith(
           sessions: sessions,
           activeSessionId: sessions.first.id,
+          selectedModel: selectedModel,
+          configs: configs,
         );
       } else {
+        state = state.copyWith(
+          selectedModel: selectedModel,
+          configs: configs,
+        );
         await storage.saveSessions(state.sessions);
       }
     } catch (_) {
@@ -184,7 +218,38 @@ class ChatController extends StateNotifier<ChatState> {
   void selectModel(String model) {
     if (modelConfigs.containsKey(model) && mounted && !state.isSending) {
       state = state.copyWith(selectedModel: model);
+      _persistConfigSettings();
     }
+  }
+
+  Future<void> updateModelSettings({
+    required String model,
+    required String apiKey,
+    required double temperature,
+    required String systemPrompt,
+  }) async {
+    await _ready;
+    if (!mounted || state.isSending || !modelConfigs.containsKey(model)) {
+      return;
+    }
+    final String normalizedApiKey = apiKey.trim();
+    final String normalizedPrompt = systemPrompt.trim();
+    if (normalizedApiKey.length > LlmConfig.maxApiKeyLength ||
+        normalizedPrompt.length > LlmConfig.maxSystemPromptLength) {
+      return;
+    }
+    final Map<String, LlmConfig> configs =
+        Map<String, LlmConfig>.from(state.configs);
+    configs[model] = (state.configs[model] ?? modelConfigs[model]!).copyWith(
+      apiKey: normalizedApiKey,
+      temperature: temperature.clamp(0, 2).toDouble(),
+      systemPrompt: normalizedPrompt,
+    );
+    state = state.copyWith(
+      selectedModel: model,
+      configs: configs,
+    );
+    await _persistConfigSettings();
   }
 
   Future<void> createSession() async {
@@ -268,7 +333,7 @@ class ChatController extends StateNotifier<ChatState> {
     if (session == null) {
       return;
     }
-    final LlmConfig config = modelConfigs[state.selectedModel]!;
+    final LlmConfig config = state.selectedConfig;
     final String modelName = state.selectedModel;
     final List<Message> messages = List<Message>.from(session.messages)
       ..add(Message(role: MessageRole.user, content: trimmed))
@@ -301,8 +366,14 @@ class ChatController extends StateNotifier<ChatState> {
       return;
     }
 
+    final List<Message> requestMessages = <Message>[
+      if (config.systemPrompt.isNotEmpty)
+        Message(role: MessageRole.system, content: config.systemPrompt),
+      ...messages,
+    ];
     final List<Message> context = _retriever.injectContext(
-      List<Message>.from(messages)..removeAt(assistantIndex),
+      List<Message>.from(requestMessages)
+        ..removeAt(assistantIndex + (config.systemPrompt.isEmpty ? 0 : 1)),
       trimmed,
     );
     final buffer = StringBuffer();
@@ -394,6 +465,22 @@ class ChatController extends StateNotifier<ChatState> {
       }
     } catch (_) {
       // Storage failures must not turn a successful chat request into an error.
+    }
+  }
+
+  Future<void> _persistConfigSettings() async {
+    final ModelConfigStorage? configStorage = _configStorage;
+    if (configStorage == null) {
+      return;
+    }
+    try {
+      await configStorage.save(
+        selectedModel: state.selectedModel,
+        configs: state.configs,
+        defaults: modelConfigs,
+      );
+    } catch (_) {
+      // Settings failures must not block local chat usage.
     }
   }
 

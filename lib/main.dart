@@ -3,6 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/memory/conversation_session.dart';
+import 'core/models/llm_config.dart';
 import 'core/models/message.dart';
 import 'core/models/prompt_template.dart';
 import 'core/rag/local_document.dart';
@@ -479,6 +480,184 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
     }
   }
 
+  Future<void> _showModelSettings() async {
+    final ChatController chatController =
+        ref.read(chatControllerProvider.notifier);
+    await chatController.ready;
+    if (!mounted) {
+      return;
+    }
+    String selectedModel = chatController.snapshot.selectedModel;
+    LlmConfig selectedConfig = chatController.snapshot.selectedConfig;
+    final TextEditingController apiKeyController =
+        TextEditingController(text: selectedConfig.apiKey);
+    final TextEditingController promptController =
+        TextEditingController(text: selectedConfig.systemPrompt);
+    double temperature = selectedConfig.temperature;
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext sheetContext) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setSheetState) {
+              final bool isDark =
+                  Theme.of(context).brightness == Brightness.dark;
+              return SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    DesignTokens.space4,
+                    DesignTokens.space3,
+                    DesignTokens.space4,
+                    DesignTokens.space3 +
+                        MediaQuery.of(context).viewInsets.bottom,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          '模型设置',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: DesignTokens.space3),
+                        DropdownButtonFormField<String>(
+                          value: selectedModel,
+                          decoration: const InputDecoration(
+                            labelText: '模型',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: ChatController.models
+                              .map(
+                                (String model) => DropdownMenuItem<String>(
+                                  value: model,
+                                  child: Text(model),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (String? model) {
+                            if (model == null) {
+                              return;
+                            }
+                            setSheetState(() {
+                              selectedModel = model;
+                              selectedConfig =
+                                  chatController.snapshot.configs[model] ??
+                                      ChatController.modelConfigs[model]!;
+                              apiKeyController.text = selectedConfig.apiKey;
+                              promptController.text =
+                                  selectedConfig.systemPrompt;
+                              temperature = selectedConfig.temperature;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: DesignTokens.space3),
+                        Row(
+                          children: <Widget>[
+                            const Text('温度'),
+                            const Spacer(),
+                            Text(
+                              temperature.toStringAsFixed(1),
+                              style: const TextStyle(
+                                color: DesignTokens.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Slider(
+                          value: temperature,
+                          min: 0,
+                          max: 2,
+                          divisions: 20,
+                          activeColor: DesignTokens.primary,
+                          label: temperature.toStringAsFixed(1),
+                          onChanged: (double value) {
+                            setSheetState(() => temperature = value);
+                          },
+                        ),
+                        TextField(
+                          controller: apiKeyController,
+                          obscureText: true,
+                          maxLength: LlmConfig.maxApiKeyLength,
+                          enableSuggestions: false,
+                          autocorrect: false,
+                          decoration: const InputDecoration(
+                            labelText: 'API Key',
+                            hintText: '留空则不发送 Authorization',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: DesignTokens.space2),
+                        TextField(
+                          controller: promptController,
+                          minLines: 2,
+                          maxLines: 5,
+                          maxLength: LlmConfig.maxSystemPromptLength,
+                          decoration: const InputDecoration(
+                            labelText: 'System Prompt',
+                            hintText: '可选的系统级指令',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('深色模式'),
+                          subtitle: Text(
+                            '跟随系统',
+                            style: TextStyle(
+                              color: isDark
+                                  ? DesignTokens.inkLight
+                                  : DesignTokens.subText,
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.brightness_auto_outlined,
+                            color: isDark
+                                ? DesignTokens.inkLight
+                                : DesignTokens.subText,
+                          ),
+                        ),
+                        const SizedBox(height: DesignTokens.space2),
+                        Text(
+                          'API Key 会保存在本机偏好设置中，生产环境建议使用服务端代理或短期凭据。',
+                          style: TextStyle(
+                            color: isDark
+                                ? DesignTokens.inkLight
+                                : DesignTokens.subText,
+                            fontSize: DesignTokens.fontSizeCaption,
+                          ),
+                        ),
+                        const SizedBox(height: DesignTokens.space3),
+                        FilledButton(
+                          onPressed: () async {
+                            await chatController.updateModelSettings(
+                              model: selectedModel,
+                              apiKey: apiKeyController.text,
+                              temperature: temperature,
+                              systemPrompt: promptController.text,
+                            );
+                            if (sheetContext.mounted) {
+                              Navigator.of(sheetContext).pop();
+                            }
+                          },
+                          child: const Text('保存设置'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      apiKeyController.dispose();
+      promptController.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ChatState chatState = ref.watch(chatControllerProvider);
@@ -503,6 +682,11 @@ class _ChatHomePageState extends ConsumerState<ChatHomePage> {
           style: TextStyle(fontSize: DesignTokens.fontSizeTitle),
         ),
         actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: '模型设置',
+            onPressed: _showModelSettings,
+          ),
           PopupMenuButton<String>(
             initialValue: chatState.selectedModel,
             tooltip: '选择模型',

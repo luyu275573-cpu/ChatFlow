@@ -8,6 +8,7 @@ import 'package:chatflow/core/rag/local_document.dart';
 import 'package:chatflow/core/models/message.dart';
 import 'package:chatflow/shared/services/conversation_storage.dart';
 import 'package:chatflow/shared/services/local_document_storage.dart';
+import 'package:chatflow/shared/services/model_config_storage.dart';
 
 void main() {
   test('restores, switches model, sends, and persists local replies', () async {
@@ -135,5 +136,47 @@ void main() {
     expect(controller.state.messages.last.content, contains('模型服务暂时不可用'));
     expect(controller.state.messages.last.content,
         isNot(contains('secret-token')));
+  });
+
+  test('updates and restores runtime model settings', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final ModelConfigStorage configStorage = ModelConfigStorage(preferences);
+    List<Message>? request;
+    final controller = ChatController(
+      storage: ConversationStorage(preferences),
+      configStorage: configStorage,
+      streamFactory: (config, messages) {
+        request = messages;
+        expect(config.temperature, 1.1);
+        return Stream<String>.value('已应用设置');
+      },
+    );
+    addTearDown(controller.dispose);
+
+    await controller.ready;
+    await controller.updateModelSettings(
+      model: 'Qwen2.5',
+      apiKey: 'runtime-key',
+      temperature: 1.1,
+      systemPrompt: '回答必须简洁',
+    );
+    await controller.send('设置测试');
+
+    expect(controller.state.selectedModel, 'Qwen2.5');
+    expect(controller.state.selectedConfig.apiKey, 'runtime-key');
+    expect(request?.first.role, MessageRole.system);
+    expect(request?.first.content, '回答必须简洁');
+
+    final restored = ChatController(
+      storage: ConversationStorage(preferences),
+      configStorage: ModelConfigStorage(preferences),
+    );
+    addTearDown(restored.dispose);
+    await restored.ready;
+    expect(restored.state.selectedModel, 'Qwen2.5');
+    expect(restored.state.selectedConfig.apiKey, 'runtime-key');
+    expect(restored.state.selectedConfig.systemPrompt, '回答必须简洁');
+    expect(restored.state.selectedConfig.temperature, 1.1);
   });
 }

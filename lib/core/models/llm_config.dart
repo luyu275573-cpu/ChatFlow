@@ -7,6 +7,7 @@ class LlmConfig {
     required this.baseUrl,
     required this.apiKey,
     this.temperature = 0.7,
+    this.systemPrompt = '',
   });
 
   static const LlmConfig deepSeek = LlmConfig(
@@ -35,10 +36,15 @@ class LlmConfig {
   final String baseUrl;
   final String apiKey;
   final double temperature;
+  final String systemPrompt;
+
+  static const int maxApiKeyLength = 512;
+  static const int maxSystemPromptLength = 4000;
 
   LlmConfig copyWith({
     String? apiKey,
     double? temperature,
+    String? systemPrompt,
   }) {
     return LlmConfig(
       provider: provider,
@@ -46,6 +52,7 @@ class LlmConfig {
       baseUrl: baseUrl,
       apiKey: apiKey ?? this.apiKey,
       temperature: temperature ?? this.temperature,
+      systemPrompt: systemPrompt ?? this.systemPrompt,
     );
   }
 }
